@@ -4,12 +4,12 @@ import tkinter as tk
 from PIL import ImageTk, Image
 from tkinter import filedialog
 import PIL.Image, PIL.ImageTk
-from pynput.keyboard import Key, Listener
-
+# from pynput.keyboard import Key, Listener
+zoom=1
 offset_x=0
 offset_y=0
-img1orig = cv2.imread("images/img1.png")
-img2orig = cv2.imread("images/img2.png")
+# img1orig = cv2.imread("images/img1.png")
+# img2orig = cv2.imread("images/img2.png")
 manual_offset = False
 stepsize = 10
 
@@ -71,6 +71,16 @@ def reset_offsets(img1,img2):
 def change_stepsize(size):
     global stepsize
     stepsize=size
+
+def zoom_in(img1,img2):
+    global zoom
+    zoom=zoom*1.1
+    show_combined(img1,img2)
+
+def zoom_out(img1,img2):
+    global zoom
+    zoom=zoom/1.1
+    show_combined(img1,img2)
 
 def resize_and_combine_images(image1, image2):
     global manual_offset
@@ -159,11 +169,26 @@ def calc_differences(image1, image2):
     return img1, img2, combined, thresh, result1, result2
 
 def show_combined(img1, img2):
-    global photo1, photo2, photo3, photo4, photo5, photo6
+    global photo1, photo2, photo3, photo4, photo5, photo6, zoom
+    dimx=img1.shape[0]
+    dimy=img1.shape[0]
+    dimx=int(dimx*zoom)
+    dimy=int(dimy*zoom)
+
+    newdim=(dimx,dimy)
 
     img1, img2, combined, thresh, result1, result2 = calc_differences(img1, img2)
+    img1 = cv2.resize(img1,newdim)
+    img2 = cv2.resize(img2, newdim)
+    combined = cv2.resize(combined, newdim)
+    thresh = cv2.resize(thresh, newdim)
+    result1 = cv2.resize(result1, newdim)
+    result2 = cv2.resize(result2, newdim)
+
 
     height, width, no_channels = combined.shape
+    width=300
+    height=300
     photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
     canvas1 = tk.Canvas(root, width=width, height=height)
     canvas1.create_image(0, 0, image=photo1, anchor=tk.NW)
@@ -206,6 +231,8 @@ class App(tk.Frame):
         btnstep1 = tk.Button(text='Stepsize 1', command=lambda *args: change_stepsize(1))
         btnstep5 = tk.Button(text='Stepsize 5', command=lambda *args: change_stepsize(5))
         btnstep10 = tk.Button(text='Stepsize 10', command=lambda *args: change_stepsize(10))
+        btnzoomin = tk.Button(text='Zoom in', command=lambda *args: zoom_in(img1orig, img2orig))
+        btnzoomout = tk.Button(text='Zoom out', command=lambda *args: zoom_out(img1orig, img2orig))
 
         btn1.config(width=20, height=2)
         btn2.config(width=20, height=2)
@@ -215,21 +242,25 @@ class App(tk.Frame):
         btnleft.config(width=5, height=2)
         btnright.config(width=5, height=2)
         btnreset.config(width=5, height=2)
-        btnstep1.config(width=20, height=2)
-        btnstep5.config(width=20, height=2)
-        btnstep10.config(width=20, height=2)
+        btnstep1.config(width=8, height=2)
+        btnstep5.config(width=8, height=2)
+        btnstep10.config(width=8, height=2)
+        btnzoomin.config(width=8, height=2)
+        btnzoomout.config(width=8, height=2)
 
         btn1.grid(row=0, column=1, columnspan=3)
         btn2.grid(row=1, column=1, columnspan=3)
         btn3.grid(row=2, column=1, columnspan=3)
-        btnstep1.grid(row=7, column=2)
-        btnstep5.grid(row=8, column=2)
-        btnstep10.grid(row=9, column=2)
+        btnstep1.grid(row=7, column=1)
+        btnstep5.grid(row=7, column=2)
+        btnstep10.grid(row=7, column=3)
         btnup.grid(row=4, column=2)
         btndown.grid(row=6, column=2)
         btnleft.grid(row=5, column=1)
         btnright.grid(row=5, column=3)
         btnreset.grid(row=5, column=2)
+        btnzoomin.grid(row=8, column=1)
+        btnzoomout.grid(row=8, column=3)
 
 if __name__ == "__main__":
     root = tk.Tk()
