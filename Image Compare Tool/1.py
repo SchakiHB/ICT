@@ -178,67 +178,67 @@ class App(tk.Tk):
         zoom = zoom / 1.1
         App.show_combined(self,img1, img2, frame)
 
-    def resize_and_combine_images(image1, image2):
-    global manual_offset
-    global offset_x, offset_y
+    def resize_and_combine_images(self, image1, image2, frame):
+        global manual_offset
+        global offset_x, offset_y
 
-    image1height = image1.shape[0]
-    image2height = image2.shape[0]
-    image1width = image1.shape[1]
-    image2width = image2.shape[1]
+        image1height = image1.shape[0]
+        image2height = image2.shape[0]
+        image1width = image1.shape[1]
+        image2width = image2.shape[1]
 
-    img1 = image1.copy()
-    img2 = image2.copy()
+        img1 = image1.copy()
+        img2 = image2.copy()
 
-    diffheight = image1height - image2height
-    diffwidth = image1width - image2width
+        diffheight = image1height - image2height
+        diffwidth = image1width - image2width
 
-    if diffheight > 0:
-        img2 = cv2.copyMakeBorder(img2, diffheight, 0, 0, 0, cv2.BORDER_REPLICATE)
-    else:
-        img1 = cv2.copyMakeBorder(img1, abs(diffheight), 0, 0, 0, cv2.BORDER_REPLICATE)
-    if diffwidth > 0:
-        img2 = cv2.copyMakeBorder(img2, 0, 0, diffwidth, 0, cv2.BORDER_REPLICATE)
-    else:
-        img1 = cv2.copyMakeBorder(img1, 0, 0, abs(diffwidth), 0, cv2.BORDER_REPLICATE)
-
-    imgheight = img1.shape[0]
-    imgwidth = img1.shape[1]
-
-    # cv2.imshow("img1", img1)
-    # cv2.imshow("img2", img2)
-
-    if offset_x == 0 and offset_y == 0:
-        combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
-
-    else:
-
-
-        if offset_x > 0:
-            img2 = img2[0:imgheight, 0:imgwidth-offset_x]
-
-            img2 = cv2.copyMakeBorder(img2, 0, 0, offset_x, 0, cv2.BORDER_REPLICATE)
+        if diffheight > 0:
+            img2 = cv2.copyMakeBorder(img2, diffheight, 0, 0, 0, cv2.BORDER_REPLICATE)
         else:
-            img2 = img2[0:imgheight, abs(offset_x):imgwidth ]
-
-            img2 = cv2.copyMakeBorder(img2, 0, 0, 0, abs(offset_x), cv2.BORDER_REPLICATE)
-
-        if offset_y > 0:
-            img2 = img2[offset_y:imgheight, 0:imgwidth]
-
-            img2 = cv2.copyMakeBorder(img2, 0, offset_y, 0, 0, cv2.BORDER_REPLICATE)
+            img1 = cv2.copyMakeBorder(img1, abs(diffheight), 0, 0, 0, cv2.BORDER_REPLICATE)
+        if diffwidth > 0:
+            img2 = cv2.copyMakeBorder(img2, 0, 0, diffwidth, 0, cv2.BORDER_REPLICATE)
         else:
-            img2 = img2[0:imgheight-abs(offset_y), 0:imgwidth]
+            img1 = cv2.copyMakeBorder(img1, 0, 0, abs(diffwidth), 0, cv2.BORDER_REPLICATE)
 
-            img2 = cv2.copyMakeBorder(img2, abs(offset_y), 0, 0, 0, cv2.BORDER_REPLICATE)
+        imgheight = img1.shape[0]
+        imgwidth = img1.shape[1]
 
-        # cv2.imshow("img1resized", img1)
-        # cv2.imshow("img2resized", img2)
+        # cv2.imshow("img1", img1)
+        # cv2.imshow("img2", img2)
 
-        combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
+        if offset_x == 0 and offset_y == 0:
+            combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
+
+        else:
 
 
-    return img1, img2, combined
+            if offset_x > 0:
+                img2 = img2[0:imgheight, 0:imgwidth-offset_x]
+
+                img2 = cv2.copyMakeBorder(img2, 0, 0, offset_x, 0, cv2.BORDER_REPLICATE)
+            else:
+                img2 = img2[0:imgheight, abs(offset_x):imgwidth ]
+
+                img2 = cv2.copyMakeBorder(img2, 0, 0, 0, abs(offset_x), cv2.BORDER_REPLICATE)
+
+            if offset_y > 0:
+                img2 = img2[offset_y:imgheight, 0:imgwidth]
+
+                img2 = cv2.copyMakeBorder(img2, 0, offset_y, 0, 0, cv2.BORDER_REPLICATE)
+            else:
+                img2 = img2[0:imgheight-abs(offset_y), 0:imgwidth]
+
+                img2 = cv2.copyMakeBorder(img2, abs(offset_y), 0, 0, 0, cv2.BORDER_REPLICATE)
+
+            # cv2.imshow("img1resized", img1)
+            # cv2.imshow("img2resized", img2)
+
+            combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
+
+
+        return img1, img2, combined
 
     def calc_differences(self,image1, image2, frame):
 
