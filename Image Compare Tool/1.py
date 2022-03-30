@@ -9,10 +9,11 @@ from functools import partial
 zoom=1
 offset_x=0
 offset_y=0
-matchthreshold = 0.8
+matchthreshold = 0.7
 manual_offset = False
 stepsize = 10
 matched=False
+matchtext="not matched"
 img1matched=cv2.imread("images/img1.png")
 img2matched=cv2.imread("images/img1.png")
 
@@ -69,7 +70,7 @@ class ScrollbarFrame(tk.Frame):
 class App(tk.Tk):
 
     def __init__(self, *args, **kwargs):
-        global img1orig,img2orig
+        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus
 
         # tk.Frame.__init__(self, *args, **kwargs)
         super().__init__()
@@ -97,6 +98,10 @@ class App(tk.Tk):
         btnzoomin = tk.Button(frame, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
         btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
+        matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
+        matchthresholdslider.set(80)
+        matchthreshold = matchthresholdslider.get()/100
+        matchstatus = tk.Text(frame, height=1, width=15)
 
         btn1.config(width=20, height=2)
         btn2.config(width=20, height=2)
@@ -112,6 +117,8 @@ class App(tk.Tk):
         btnzoomin.config(width=8, height=2)
         btnzoomout.config(width=8, height=2)
         btnmatch.config(width=8, height=2)
+        matchthresholdslider.config(width=10)
+        matchstatus.insert(tk.END, matchtext)
 
         btn1.grid(row=0, column=1, columnspan=3)
         btn2.grid(row=1, column=1, columnspan=3)
@@ -126,7 +133,9 @@ class App(tk.Tk):
         btnreset.grid(row=4, column=2)
         btnzoomin.grid(row=7, column=1)
         btnzoomout.grid(row=7, column=3)
-        btnmatch.grid(row=8, column=2)
+        matchthresholdslider.grid(row=8, column=2)
+        btnmatch.grid(row=9, column=2)
+        matchstatus.grid(row=10, column=2)
 
     def increase_offset_x(self,img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -351,10 +360,20 @@ class App(tk.Tk):
         # canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
         # canvas6.grid(row=7, column=7, rowspan=3, columnspan=3)
 
+    def get_Matchthresh(self):
+        global matchthresholdslider, matchthreshold
+        matchthreshold = matchthresholdslider.get()/100
+
+    def set_matchtext(self, text):
+        global matchstatus
+        matchstatus.delete(1.0, "end")
+        matchstatus.insert(1.0, text)
+
     def match(self, image1, image2, frame):
 
-        global matchthreshold, photo5, photo6, matched, img1matched, img2matched
+        global matchthreshold, photo5, photo6, matched, img1matched, img2matched, matchtext
         App.reset_offsets(self, img1orig, img2orig, frame)
+        App.get_Matchthresh(self)
 
         image1height = image1.shape[0]
         image2height = image2.shape[0]
@@ -382,34 +401,37 @@ class App(tk.Tk):
         if max_val >= matchthreshold:
 
             print('Match')
+            matchtext='Match'
+
+            top_left = max_loc
+
+            if img1area > img2area:
+
+                bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
+                #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+                #cv2.imshow("img1rect",img1)
+                img1matched = img1matched[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
+
+                photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1matched))
+
+            else:
+                bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
+                #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+                #cv2.imshow("img2rect", img2)
+                img2matched = img2matched[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
+
+
+                photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2matched))
+
+            matched=True
+
+            App.show_combined(self, img1matched, img2matched, frame)
+
         else:
             print('No match')
+            matchtext = 'No match'
 
-        top_left = max_loc
-
-        if img1area > img2area:
-
-            bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
-            #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
-            #cv2.imshow("img1rect",img1)
-            img1matched = img1matched[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
-
-            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1matched))
-
-        else:
-            bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
-            #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
-            #cv2.imshow("img2rect", img2)
-            img2matched = img2matched[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
-
-
-            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2matched))
-
-        matched=True
-
-        App.show_combined(self, img1matched, img2matched, frame)
-
-
+        App.set_matchtext(self, matchtext)
         # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
         # canvas5 = tk.Canvas(frame)
         # canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
