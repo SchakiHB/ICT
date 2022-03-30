@@ -9,7 +9,7 @@ from functools import partial
 zoom=1
 offset_x=0
 offset_y=0
-
+matchthreshold = 0.8
 manual_offset = False
 stepsize = 10
 global img1orig
@@ -75,7 +75,7 @@ class App(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         sbf.grid(row=0, column=0, sticky='nsew')
         # sbf.pack(side="top", fill="both", expand=True)
-
+        self.title("Image Compare Tool")
         # Some data, layout into the sbf.scrolled_frame
         frame = sbf.scrolled_frame
 
@@ -92,6 +92,7 @@ class App(tk.Tk):
         btnstep10 = tk.Button(frame, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
         btnzoomin = tk.Button(frame, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
+        btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
 
         btn1.config(width=20, height=2)
         btn2.config(width=20, height=2)
@@ -106,20 +107,22 @@ class App(tk.Tk):
         btnstep10.config(width=8, height=2)
         btnzoomin.config(width=8, height=2)
         btnzoomout.config(width=8, height=2)
+        btnmatch.config(width=8, height=2)
 
         btn1.grid(row=0, column=1, columnspan=3)
         btn2.grid(row=1, column=1, columnspan=3)
         btn3.grid(row=2, column=1, columnspan=3)
-        btnstep1.grid(row=7, column=1)
-        btnstep5.grid(row=7, column=2)
-        btnstep10.grid(row=7, column=3)
-        btnup.grid(row=4, column=2)
-        btndown.grid(row=6, column=2)
-        btnleft.grid(row=5, column=1)
-        btnright.grid(row=5, column=3)
-        btnreset.grid(row=5, column=2)
-        btnzoomin.grid(row=8, column=1)
-        btnzoomout.grid(row=8, column=3)
+        btnstep1.grid(row=6, column=1)
+        btnstep5.grid(row=6, column=2)
+        btnstep10.grid(row=6, column=3)
+        btnup.grid(row=3, column=2)
+        btndown.grid(row=5, column=2)
+        btnleft.grid(row=4, column=1)
+        btnright.grid(row=4, column=3)
+        btnreset.grid(row=4, column=2)
+        btnzoomin.grid(row=7, column=1)
+        btnzoomout.grid(row=7, column=3)
+        btnmatch.grid(row=8, column=2)
 
     def increase_offset_x(self,img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -278,7 +281,7 @@ class App(tk.Tk):
 
     def show_combined(self,img1, img2, frame):
         global photo1, photo2, photo3, photo4, photo5, photo6, zoom
-        dimx = img1.shape[0]
+        dimx = img1.shape[1]
         dimy = img1.shape[0]
         dimx = int(dimx * zoom)
         dimy = int(dimy * zoom)
@@ -296,30 +299,97 @@ class App(tk.Tk):
         height, width, no_channels = combined.shape
         width = 250
         height = 250
-        photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
-        canvas1 = tk.Canvas(frame, width=width, height=height)
+        photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(combined))
+        canvas1 = tk.Canvas(frame)
         canvas1.create_image(0, 0, image=photo1, anchor=tk.NW)
-        canvas1.grid(row=0, column=4, rowspan=3, columnspan=3)
-        photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2))
-        canvas2 = tk.Canvas(frame, width=width, height=height)
+        canvas1.grid(row=0, column=4, rowspan=6, columnspan=8)
+        photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(thresh))
+        canvas2 = tk.Canvas(frame)
         canvas2.create_image(0, 0, image=photo2, anchor=tk.NW)
-        canvas2.grid(row=0, column=7, rowspan=3, columnspan=3)
-        photo3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(combined))
-        canvas3 = tk.Canvas(frame, width=width, height=height)
+        canvas2.grid(row=0, column=12, rowspan=6, columnspan=8)
+        photo3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
+        canvas3 = tk.Canvas(frame)
         canvas3.create_image(0, 0, image=photo3, anchor=tk.NW)
-        canvas3.grid(row=4, column=4, rowspan=3, columnspan=3)
-        photo4 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(thresh))
-        canvas4 = tk.Canvas(frame, width=width, height=height)
+        canvas3.grid(row=6, column=4, rowspan=6, columnspan=8)
+        photo4 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
+        canvas4 = tk.Canvas(frame)
         canvas4.create_image(0, 0, image=photo4, anchor=tk.NW)
-        canvas4.grid(row=4, column=7, rowspan=3, columnspan=3)
-        photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
-        canvas5 = tk.Canvas(frame, width=width, height=height)
-        canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
-        canvas5.grid(row=7, column=4, rowspan=3, columnspan=3)
-        photo6 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
-        canvas6 = tk.Canvas(frame, width=width, height=height)
-        canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
-        canvas6.grid(row=7, column=7, rowspan=3, columnspan=3)
+        canvas4.grid(row=6, column=12, rowspan=6, columnspan=8)
+        # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
+        # canvas5 = tk.Canvas(frame)
+        # canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
+        # canvas5.grid(row=7, column=4, rowspan=3, columnspan=3)
+        # photo6 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
+        # canvas6 = tk.Canvas(frame)
+        # canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
+        # canvas6.grid(row=7, column=7, rowspan=3, columnspan=3)
+
+    def match(self, image1, image2, frame):
+
+        global matchthreshold, photo5, photo6
+        App.reset_offsets(self, img1orig, img2orig, frame)
+
+        image1height = image1.shape[0]
+        image2height = image2.shape[0]
+        image1width = image1.shape[1]
+        image2width = image2.shape[1]
+
+        img1 = image1.copy()
+        img2 = image2.copy()
+
+        img1area = image1height*image1width
+        img2area = image2height*image2width
+
+        if img1area>img2area:
+
+            result = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
+
+        else:
+
+            result = cv2.matchTemplate(img2, img1, cv2.TM_CCOEFF_NORMED)
+
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        print('Best match top left position: %s' % str(max_loc))
+        print('Best match confidence: %s' % max_val)
+
+        if max_val >= matchthreshold:
+
+            print('Match')
+        else:
+            print('No match')
+
+        top_left = max_loc
+
+        if img1area > img2area:
+
+            bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
+            #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            img1 = img1[top_left[0]:top_left[0]+image2height, top_left[1]:top_left[1]+image2width]
+
+            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
+
+        else:
+            bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
+            #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            img2 = img2[top_left[0]:top_left[0] + image1height, top_left[1]:top_left[1] + image1width]
+
+
+            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2))
+
+        App.show_combined(self, img1, img2, frame)
+
+
+        # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
+        # canvas5 = tk.Canvas(frame)
+        # canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
+        # canvas5.grid(row=12, column=4, rowspan=6, columnspan=8)
+        # photo6 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
+        # canvas6 = tk.Canvas(frame)
+        # canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
+        # canvas6.grid(row=12, column=12, rowspan=6, columnspan=8)
+
+
+
 
 
 # if __name__ == "__main__":
@@ -331,6 +401,7 @@ class App(tk.Tk):
 #     root.mainloop()
 
 if __name__ == "__main__":
+
     App().mainloop()
 
 
