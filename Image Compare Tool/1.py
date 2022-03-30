@@ -12,6 +12,10 @@ offset_y=0
 matchthreshold = 0.8
 manual_offset = False
 stepsize = 10
+matched=False
+img1matched=cv2.imread("images/img1.png")
+img2matched=cv2.imread("images/img1.png")
+
 global img1orig
 global img2orig
 
@@ -81,7 +85,7 @@ class App(tk.Tk):
 
         btn1 = tk.Button(frame, text='Load image1', command=create_img1)
         btn2 = tk.Button(frame, text='Load image2', command=create_img2)
-        btn3 = tk.Button(frame, text="show combined", command=lambda *args: App.show_combined(self,img1orig, img2orig,frame))
+        btn3 = tk.Button(frame, text="show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
         btnup = tk.Button(frame, text='up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
         btndown = tk.Button(frame, text='down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
         btnright = tk.Button(frame, text='right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
@@ -130,7 +134,10 @@ class App(tk.Tk):
         offset_x = offset_x + stepsize
         img1 = img1.copy()
         img2 = img2.copy()
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
 
     def decrease_offset_x(self,img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -138,7 +145,10 @@ class App(tk.Tk):
         offset_x = offset_x - stepsize
         img1 = img1.copy()
         img2 = img2.copy()
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
 
     def increase_offset_y(self,img1, img2, frame):
         global manual_offset, offset_y, stepsize
@@ -146,7 +156,10 @@ class App(tk.Tk):
         offset_y = offset_y + stepsize
         img1 = img1.copy()
         img2 = img2.copy()
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
 
     def decrease_offset_y(self,img1, img2, frame):
         global manual_offset, offset_y, stepsize
@@ -154,7 +167,10 @@ class App(tk.Tk):
         offset_y = offset_y - stepsize
         img1 = img1.copy()
         img2 = img2.copy()
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
 
     def reset_offsets(self,img1, img2, frame):
         global manual_offset
@@ -174,12 +190,18 @@ class App(tk.Tk):
     def zoom_in(self,img1, img2, frame):
         global zoom
         zoom = zoom * 1.1
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self,img1, img2, frame)
 
     def zoom_out(self,img1, img2, frame):
-        global zoom
+        global zoom, img1matched, img2matched
         zoom = zoom / 1.1
-        App.show_combined(self,img1, img2, frame)
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self,img1, img2, frame)
 
     def resize_and_combine_images(self, image1, image2, frame):
         global manual_offset
@@ -279,6 +301,11 @@ class App(tk.Tk):
 
         return img1, img2, combined, thresh, result1, result2
 
+    def show_combined_unmatch(self, img1, img2, frame):
+        global matched
+        matched=False
+        App.show_combined(self, img1, img2, frame)
+
     def show_combined(self,img1, img2, frame):
         global photo1, photo2, photo3, photo4, photo5, photo6, zoom
         dimx = img1.shape[1]
@@ -326,7 +353,7 @@ class App(tk.Tk):
 
     def match(self, image1, image2, frame):
 
-        global matchthreshold, photo5, photo6
+        global matchthreshold, photo5, photo6, matched, img1matched, img2matched
         App.reset_offsets(self, img1orig, img2orig, frame)
 
         image1height = image1.shape[0]
@@ -334,19 +361,19 @@ class App(tk.Tk):
         image1width = image1.shape[1]
         image2width = image2.shape[1]
 
-        img1 = image1.copy()
-        img2 = image2.copy()
+        img1matched = image1.copy()
+        img2matched = image2.copy()
 
         img1area = image1height*image1width
         img2area = image2height*image2width
 
         if img1area>img2area:
 
-            result = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
+            result = cv2.matchTemplate(img1matched, img2matched, cv2.TM_CCOEFF_NORMED)
 
         else:
 
-            result = cv2.matchTemplate(img2, img1, cv2.TM_CCOEFF_NORMED)
+            result = cv2.matchTemplate(img2matched, img1matched, cv2.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
         print('Best match top left position: %s' % str(max_loc))
@@ -363,22 +390,24 @@ class App(tk.Tk):
         if img1area > img2area:
 
             bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
-            cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
             #cv2.imshow("img1rect",img1)
-            img1 = img1[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
+            img1matched = img1matched[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
 
-            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
+            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1matched))
 
         else:
             bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
-            cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
             #cv2.imshow("img2rect", img2)
-            img2 = img2[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
+            img2matched = img2matched[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
 
 
-            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2))
+            photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2matched))
 
-        App.show_combined(self, img1, img2, frame)
+        matched=True
+
+        App.show_combined(self, img1matched, img2matched, frame)
 
 
         # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
