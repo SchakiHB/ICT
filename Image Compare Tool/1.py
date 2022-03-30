@@ -363,15 +363,17 @@ class App(tk.Tk):
         if img1area > img2area:
 
             bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
-            #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
-            img1 = img1[top_left[0]:top_left[0]+image2height, top_left[1]:top_left[1]+image2width]
+            cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            #cv2.imshow("img1rect",img1)
+            img1 = img1[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
 
             photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
 
         else:
             bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
-            #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
-            img2 = img2[top_left[0]:top_left[0] + image1height, top_left[1]:top_left[1] + image1width]
+            cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
+            #cv2.imshow("img2rect", img2)
+            img2 = img2[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
 
 
             photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2))
