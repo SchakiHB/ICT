@@ -138,7 +138,7 @@ class App(tk.Tk):
 
         btnreset = tk.Button(frame, text='reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
         btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
-        btnstep8 = tk.Button(frame, text='Stepsize 8', command=lambda *args: App.change_stepsize(self,8))
+        btnstep10 = tk.Button(frame, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
         btnstep25 = tk.Button(frame, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
         # btnstep50 = tk.Button(frame, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
 
@@ -146,7 +146,7 @@ class App(tk.Tk):
         keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
         keyboard.add_hotkey('+', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
-        btnresetzoom = tk.Button(frame, text='Reset Zoom', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
+        btnresetzoom = tk.Button(frame, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
 
         btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
         matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
@@ -155,6 +155,7 @@ class App(tk.Tk):
         matchstatus = tk.Text(frame, height=1, width=20)
         btnbigger = tk.Button(frame, text='Bigger', command=lambda *args: App.increase_imagesize(self,img1orig, img2orig, frame))
         btnsmaller = tk.Button(frame, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, frame))
+        btnresetsize = tk.Button(frame, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, frame))
 
         btn1.config(width=20, height=2)
         btn2.config(width=20, height=2)
@@ -165,7 +166,7 @@ class App(tk.Tk):
         btnright.config(width=5, height=2)
         btnreset.config(width=5, height=2)
         btnstep1.config(width=8, height=2)
-        btnstep8.config(width=8, height=2)
+        btnstep10.config(width=8, height=2)
         btnstep25.config(width=8, height=2)
 
         btnzoomin.config(width=8, height=2)
@@ -176,12 +177,13 @@ class App(tk.Tk):
         matchstatus.insert(tk.END, matchtext)
         btnbigger.config(width=8, height=2)
         btnsmaller.config(width=8, height=2)
+        btnresetsize.config(width=8, height=2)
 
         btn1.grid(row=0, column=0, columnspan=3)
         btn2.grid(row=1, column=0, columnspan=3)
         btn3.grid(row=2, column=0, columnspan=3)
         btnstep1.grid(row=6, column=0)
-        btnstep8.grid(row=6, column=1)
+        btnstep10.grid(row=6, column=1)
         btnstep25.grid(row=6, column=2)
  #       btnstep50.grid(row=6, column=3)
         btnup.grid(row=3, column=1)
@@ -196,7 +198,8 @@ class App(tk.Tk):
         btnmatch.grid(row=9, column=1)
         matchstatus.grid(row=10, column=0, columnspan=3)
         btnbigger.grid(row=11, column=0)
-        btnsmaller.grid(row=11, column=1)
+        btnsmaller.grid(row=11, column=2)
+        btnresetsize.grid(row=11, column=1)
 
         image1_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
                                         height=300 * imagefactor)
@@ -317,6 +320,14 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
+    def reset_imagesize(self,img1, img2, frame):
+        global imagefactor
+        imagefactor = 1
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self,img1, img2, frame)
+
     def resize_and_combine_images(self, image1, image2, frame):
         global manual_offset
         global offset_x, offset_y
@@ -416,13 +427,15 @@ class App(tk.Tk):
         return img1, img2, combined, thresh, result1, result2
 
     def show_combined_unmatch(self, img1, img2, frame):
-        global matched
+        global matched, matchtext
         matched=False
+        matchtext = "not matched"
         App.show_combined(self, img1, img2, frame)
 
     def show_combined(self,img1, img2, frame):
-        global photo1, photo2, photo3, photo4, photo5, photo6, zoom, image1_window, image2_window, image3_window, image4_window
+        global photo1, photo2, photo3, photo4, photo5, photo6, zoom, image1_window, image2_window, image3_window, image4_window, matchtext
 
+        App.set_matchtext(self, matchtext)
         img1, img2, combined = App.resize_and_combine_images(self,img1,img2, frame)
 
         dimx = img1.shape[1]
