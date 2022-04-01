@@ -1,25 +1,24 @@
 import cv2
-import imutils
-import tkinter as tk
-from PIL import ImageTk, Image
-from tkinter import filedialog
-import PIL.Image, PIL.ImageTk
-import keyboard
+import imutils   #contour
+import tkinter as tk    #gui
+from tkinter import filedialog    #fileloader in gui
+import PIL.Image, PIL.ImageTk    #image view in gui
+import keyboard    #keyboard inputs
 
 from functools import partial
 # from pynput.keyboard import Key, Listener
 
-zoom=1
-offset_x=0
-offset_y=0
+zoom = 1
+offset_x = 0
+offset_y = 0
 matchthreshold = 0.7
 manual_offset = False
 stepsize = 10
 imagefactor = 1
-matched=False
-matchtext="not matched"
-img1matched=cv2.imread("images/img1.png")
-img2matched=cv2.imread("images/img1.png")
+matched = False
+matchtext = "not matched"
+img1matched = cv2.imread("images/img1.png")
+img2matched = cv2.imread("images/img1.png")
 
 global img1orig
 global img2orig
@@ -27,13 +26,13 @@ global img2orig
 
 def create_img1():
     global img1orig
-    img1orig = cv2.imread(filedialog.askopenfilename(title='open'))
+    img1orig = cv2.imread(tk.filedialog.askopenfilename(title='open'))
     img1orig = cv2.cvtColor(img1orig, cv2.COLOR_BGR2RGB)
 
 
 def create_img2():
     global img2orig
-    img2orig = cv2.imread(filedialog.askopenfilename(title='open'))
+    img2orig = cv2.imread(tk.filedialog.askopenfilename(title='open'))
     img2orig = cv2.cvtColor(img2orig, cv2.COLOR_BGR2RGB)
 
 
@@ -125,16 +124,10 @@ class App(tk.Tk):
         btn3 = tk.Button(frame, text="show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
 
         btnup = tk.Button(frame, text='up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('w', lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
 
         btndown = tk.Button(frame, text='down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('s', lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
-
         btnright = tk.Button(frame, text='right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('d', lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
-
         btnleft = tk.Button(frame, text='left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('a', lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
 
         btnreset = tk.Button(frame, text='reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
         btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
@@ -143,9 +136,7 @@ class App(tk.Tk):
         # btnstep50 = tk.Button(frame, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
 
         btnzoomin = tk.Button(frame, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('+', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
         btnresetzoom = tk.Button(frame, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
 
         btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
@@ -201,6 +192,13 @@ class App(tk.Tk):
         btnsmaller.grid(row=11, column=2)
         btnresetsize.grid(row=11, column=1)
 
+        keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
+        keyboard.add_hotkey('-', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
+        keyboard.add_hotkey('a', lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
+        keyboard.add_hotkey('d', lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
+        keyboard.add_hotkey('s', lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
+        keyboard.add_hotkey('w', lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
+
         image1_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
                                         height=300 * imagefactor)
         image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
@@ -217,9 +215,7 @@ class App(tk.Tk):
                                         height=300 * imagefactor)
         image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
 
-
-
-    def increase_offset_x(self,img1, img2, frame):
+    def increase_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
         manual_offset = True
         offset_x = offset_x + stepsize
@@ -230,7 +226,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self, img1, img2, frame)
 
-    def decrease_offset_x(self,img1, img2, frame):
+    def decrease_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
         manual_offset = True
         offset_x = offset_x - stepsize
@@ -241,7 +237,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self, img1, img2, frame)
 
-    def increase_offset_y(self,img1, img2, frame):
+    def increase_offset_y(self, img1, img2, frame):
         global manual_offset, offset_y, stepsize
         manual_offset = True
         offset_y = offset_y + stepsize
@@ -252,7 +248,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self, img1, img2, frame)
 
-    def decrease_offset_y(self,img1, img2, frame):
+    def decrease_offset_y(self, img1, img2, frame):
         global manual_offset, offset_y, stepsize
         manual_offset = True
         offset_y = offset_y - stepsize
@@ -276,11 +272,11 @@ class App(tk.Tk):
         img2 = img2.copy()
         App.show_combined(self,img1, img2, frame)
 
-    def change_stepsize(self,size):
+    def change_stepsize(self, size):
         global stepsize
         stepsize = size
 
-    def zoom_in(self,img1, img2, frame):
+    def zoom_in(self, img1, img2, frame):
         global zoom
         zoom = zoom * 1.1
         if matched:
@@ -288,7 +284,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
-    def zoom_out(self,img1, img2, frame):
+    def zoom_out(self, img1, img2, frame):
         global zoom, img1matched, img2matched
         zoom = zoom / 1.1
         if matched:
@@ -296,7 +292,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
-    def zoom_reset(self,img1, img2, frame):
+    def zoom_reset(self, img1, img2, frame):
         global zoom
         zoom = 1
         if matched:
@@ -304,7 +300,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
-    def increase_imagesize(self,img1, img2, frame):
+    def increase_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = imagefactor * 1.1
         if matched:
@@ -312,7 +308,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
-    def decrease_imagesize(self,img1, img2, frame):
+    def decrease_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = imagefactor / 1.1
         if matched:
@@ -320,7 +316,7 @@ class App(tk.Tk):
         else:
             App.show_combined(self,img1, img2, frame)
 
-    def reset_imagesize(self,img1, img2, frame):
+    def reset_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = 1
         if matched:
@@ -355,31 +351,67 @@ class App(tk.Tk):
         imgheight = img1.shape[0]
         imgwidth = img1.shape[1]
 
-
+        # cv2.imshow("img1", img1)
+        # cv2.imshow("img2", img2)
 
         if offset_x == 0 and offset_y == 0:
             combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
 
         else:
 
+            img1origheight = img1orig.shape[0]
+            img2origheight = img2orig.shape[0]
+            img1origwidth = img1orig.shape[0]
+            img2origwidth = img2orig.shape[0]
 
-            if offset_x > 0:
-                img2 = img2[0:imgheight, 0:imgwidth-offset_x]
+            img1origarea = img1origheight * img1origwidth
+            img2origarea = img2origheight * img2origwidth
 
-                img2 = cv2.copyMakeBorder(img2, 0, 0, offset_x, 0, cv2.BORDER_REPLICATE)
+            if img1origarea > img2origarea:
+
+                if offset_x > 0:
+                    img2 = img2[0:imgheight, 0:imgwidth-offset_x]
+
+                    img2 = cv2.copyMakeBorder(img2, 0, 0, offset_x, 0, cv2.BORDER_REPLICATE)
+                else:
+                    img2 = img2[0:imgheight, abs(offset_x):imgwidth ]
+
+                    img2 = cv2.copyMakeBorder(img2, 0, 0, 0, abs(offset_x), cv2.BORDER_REPLICATE)
+
+                if offset_y > 0:
+                    img2 = img2[offset_y:imgheight, 0:imgwidth]
+
+                    img2 = cv2.copyMakeBorder(img2, 0, offset_y, 0, 0, cv2.BORDER_REPLICATE)
+                else:
+                    img2 = img2[0:imgheight-abs(offset_y), 0:imgwidth]
+
+                    img2 = cv2.copyMakeBorder(img2, abs(offset_y), 0, 0, 0, cv2.BORDER_REPLICATE)
+
+                # cv2.imshow("img1grö0er", img1)
+                # cv2.imshow("img2kleiner", img2)
+
             else:
-                img2 = img2[0:imgheight, abs(offset_x):imgwidth ]
 
-                img2 = cv2.copyMakeBorder(img2, 0, 0, 0, abs(offset_x), cv2.BORDER_REPLICATE)
+                if offset_x > 0:
+                    img1 = img1[0:imgheight, 0:imgwidth - offset_x]
 
-            if offset_y > 0:
-                img2 = img2[offset_y:imgheight, 0:imgwidth]
+                    img1 = cv2.copyMakeBorder(img1, 0, 0, offset_x, 0, cv2.BORDER_REPLICATE)
+                else:
+                    img1 = img1[0:imgheight, abs(offset_x):imgwidth]
 
-                img2 = cv2.copyMakeBorder(img2, 0, offset_y, 0, 0, cv2.BORDER_REPLICATE)
-            else:
-                img2 = img2[0:imgheight-abs(offset_y), 0:imgwidth]
+                    img1 = cv2.copyMakeBorder(img1, 0, 0, 0, abs(offset_x), cv2.BORDER_REPLICATE)
 
-                img2 = cv2.copyMakeBorder(img2, abs(offset_y), 0, 0, 0, cv2.BORDER_REPLICATE)
+                if offset_y > 0:
+                    img1 = img1[offset_y:imgheight, 0:imgwidth]
+
+                    img1 = cv2.copyMakeBorder(img1, 0, offset_y, 0, 0, cv2.BORDER_REPLICATE)
+                else:
+                    img1 = img1[0:imgheight - abs(offset_y), 0:imgwidth]
+
+                    img1 = cv2.copyMakeBorder(img1, abs(offset_y), 0, 0, 0, cv2.BORDER_REPLICATE)
+
+                # cv2.imshow("img1kleiner", img1)
+                # cv2.imshow("img2größer", img2)
 
             # cv2.imshow("img1resized", img1)
             # cv2.imshow("img2resized", img2)
@@ -390,7 +422,7 @@ class App(tk.Tk):
 
         return img1, img2, combined
 
-    def calc_differences(self,image1, image2, frame):
+    def calc_differences(self, image1, image2, frame):
 
         resizedimage1, resizedimage2, combined = App.resize_and_combine_images(self,image1, image2, frame)
 
@@ -432,7 +464,7 @@ class App(tk.Tk):
         matchtext = "not matched"
         App.show_combined(self, img1, img2, frame)
 
-    def show_combined(self,img1, img2, frame):
+    def show_combined(self, img1, img2, frame):
         global photo1, photo2, photo3, photo4, photo5, photo6, zoom, image1_window, image2_window, image3_window, image4_window, matchtext
 
         App.set_matchtext(self, matchtext)
@@ -478,6 +510,7 @@ class App(tk.Tk):
         # image2_window.cnvs.delete("all")
         # image3_window.cnvs.delete("all")
         # image4_window.cnvs.delete("all")
+
         image1_window.destroy()
         image2_window.destroy()
         image3_window.destroy()
@@ -642,10 +675,6 @@ class App(tk.Tk):
         # canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
         # canvas6.grid(row=12, column=12, rowspan=6, columnspan=8)
 
-
-
-
-
 # if __name__ == "__main__":
 #     root = tk.Tk()
 #     root.geometry("1200x800+300+150")
@@ -653,6 +682,7 @@ class App(tk.Tk):
 #     root.resizable(width=True, height=True)
 #     app = App(root)
 #     root.mainloop()
+
 
 if __name__ == "__main__":
 
