@@ -19,9 +19,10 @@ matched = False
 matchtext = "not matched"
 img1matched = cv2.imread("images/img1.png")
 img2matched = cv2.imread("images/img1.png")
-
 global img1orig
 global img2orig
+img1orig = cv2.imread("images/img1.png")
+img2orig = cv2.imread("images/img1.png")
 
 
 def create_img1():
@@ -76,6 +77,7 @@ class App(tk.Tk):
         def __init__(self, master=None, **kw):
             self.image = kw.pop('image', None)
             sw = kw.pop('scrollbarwidth', 10)
+            label = kw.pop('Label', "Label")
             super(App.ScrollableImage, self).__init__(master=master, **kw)
             self.cnvs = tk.Canvas(self, highlightthickness=0, **kw)
             self.cnvs.create_image(0, 0, anchor='nw', image=self.image)
@@ -83,6 +85,9 @@ class App(tk.Tk):
             # Vertical and Horizontal scrollbars
             self.v_scroll = tk.Scrollbar(self, orient='vertical', width=sw)
             self.h_scroll = tk.Scrollbar(self, orient='horizontal', width=sw)
+
+            self.label = tk.Label(self, text=label)
+            self.label.grid(row=0, column=0, sticky='nw', padx=2, pady=2)
 
             # Grid and configure weight.
             self.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
@@ -108,7 +113,7 @@ class App(tk.Tk):
                 self.cnvs.xview_scroll(int(-1 * (evt.delta / 120)), 'units')
 
     def __init__(self, *args, **kwargs):
-        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window
+        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window, keyboard_active
 
         super().__init__()
         sbf = ScrollbarFrame(self)
@@ -119,20 +124,21 @@ class App(tk.Tk):
 
         #creates scrollable Frame for the App
         frame = sbf.scrolled_frame
+        keyboard_active = tk.BooleanVar(frame)
+    #create Buttons and such
 
-    #create Buttons
+        #loading Images
+        btn1 = tk.Button(frame, text='Load first Image', command=create_img1)
+        btn2 = tk.Button(frame, text='Load second Image', command=create_img2)
+        btn3 = tk.Button(frame, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
 
-        #loading buttons
-        btn1 = tk.Button(frame, text='Load image1', command=create_img1)
-        btn2 = tk.Button(frame, text='Load image2', command=create_img2)
-        btn3 = tk.Button(frame, text="show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
-
-        #movement buttons
-        btnup = tk.Button(frame, text='up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
-        btndown = tk.Button(frame, text='down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
-        btnright = tk.Button(frame, text='right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
-        btnleft = tk.Button(frame, text='left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
-        btnreset = tk.Button(frame, text='reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
+        #movement
+        btnup = tk.Button(frame, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
+        btndown = tk.Button(frame, text='Down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
+        btnright = tk.Button(frame, text='Right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
+        btnleft = tk.Button(frame, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
+        btnreset = tk.Button(frame, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
+        keyboarduse = tk.Checkbutton(frame, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, frame))
 
         #stepsize buttons
         btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
@@ -146,8 +152,9 @@ class App(tk.Tk):
         btnresetzoom = tk.Button(frame, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
 
         #match button + slider + text
-        btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
+        btnmatch = tk.Button(frame, text='Automatic Matching', command=lambda *args: App.match(self, img1orig, img2orig, frame))
         matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
+        thresh_label = tk.Label(frame, text="Similarity:")
         matchthresholdslider.set(80)
         matchthreshold = matchthresholdslider.get()/100
         matchstatus = tk.Text(frame, height=1, width=20)
@@ -170,7 +177,7 @@ class App(tk.Tk):
         btnzoomin.config(width=8, height=2)
         btnzoomout.config(width=8, height=2)
         btnresetzoom.config(width=8, height=2)
-        btnmatch.config(width=8, height=2)
+        btnmatch.config(width=20, height=2)
         matchthresholdslider.config(width=10)
         matchstatus.insert(tk.END, matchtext)
         btnbigger.config(width=8, height=2)
@@ -193,20 +200,28 @@ class App(tk.Tk):
         btnzoomin.grid(row=7, column=0)
         btnzoomout.grid(row=7, column=2)
         btnresetzoom.grid(row=7, column=1)
-        matchthresholdslider.grid(row=8, column=0,columnspan=3)
-        btnmatch.grid(row=9, column=1)
+        thresh_label.grid(row=8, column=0)
+        matchthresholdslider.grid(row=8, column=1,columnspan=2)
+        btnmatch.grid(row=9, column=0, columnspan=3)
         matchstatus.grid(row=10, column=0, columnspan=3)
         btnbigger.grid(row=11, column=0)
         btnsmaller.grid(row=11, column=2)
         btnresetsize.grid(row=11, column=1)
+        keyboarduse.grid(row=12, column=0, columnspan=3)
 
+    def activate_keys(self, img1, img2, frame):
         #keyboard hotkeys assign
-        keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('-', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
-        keyboard.add_hotkey('a', lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('d', lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('s', lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
-        keyboard.add_hotkey('w', lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
+        if keyboard_active.get():
+            keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
+            keyboard.add_hotkey('-', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
+            keyboard.add_hotkey('a', lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
+            keyboard.add_hotkey('d', lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
+            keyboard.add_hotkey('s', lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
+            keyboard.add_hotkey('w', lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
+        else:
+            keyboard.clear_all_hotkeys()
+
+        print(keyboard_active.get())
 
     def increase_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -478,7 +493,7 @@ class App(tk.Tk):
     def show_combined_unmatch(self, img1, img2, frame):
         global matched, matchtext
         matched=False
-        matchtext = "not matched"
+        matchtext = "not matched yet"
         App.show_combined(self, img1, img2, frame)
 
     def show_combined(self, img1, img2, frame):
@@ -525,15 +540,16 @@ class App(tk.Tk):
         #     image3_window.cnvs.xview(*args)
         #     image4_window.cnvs.xview(*args)
 
-        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined")
+        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
 
-        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Binarised diff")
         image2_window.grid(row=0, column=12, rowspan=6, columnspan=8)
 
-        image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 1")
         image3_window.grid(row=6, column=4, rowspan=6, columnspan=8)
 
-        image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 2")
         image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
 
         # image1_window.cnvs.create_image(0, 0, anchor='nw', image=image1_window.image)
@@ -546,7 +562,7 @@ class App(tk.Tk):
         # image1_window.v_scroll.config(command=image1_window.cnvs.yview())
         # image1_window.h_scroll.config(command=image1_window.cnvs.xview())
         # image1_window.cnvs.config(scrollregion=image1_window.cnvs.bbox('all'))
-        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
+
 
 
         # image2_window.cnvs.config(xscrollcommand=image1_window.h_scroll.set, yscrollcommand=image1_window.v_scroll.set)
