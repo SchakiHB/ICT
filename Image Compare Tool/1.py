@@ -36,50 +36,16 @@ def create_img2():
     img2orig = cv2.cvtColor(img2orig, cv2.COLOR_BGR2RGB)
 
 
-class ScrollableImage(tk.Frame):
-    def __init__(self, master=None, **kw):
-        self.image = kw.pop('image', None)
-        sw = kw.pop('scrollbarwidth', 10)
-        super(ScrollableImage, self).__init__(master=master, **kw)
-        self.cnvs = tk.Canvas(self, highlightthickness=0, **kw)
-        self.cnvs.create_image(0, 0, anchor='nw', image=self.image)
-        # Vertical and Horizontal scrollbars
-        self.v_scroll = tk.Scrollbar(self, orient='vertical', width=sw)
-        self.h_scroll = tk.Scrollbar(self, orient='horizontal', width=sw)
-        # Grid and configure weight.
-        self.cnvs.grid(row=0, column=0,  sticky='nsew', padx=2, pady=2)
-        self.h_scroll.grid(row=1, column=0, sticky='ew', padx=2, pady=2)
-        self.v_scroll.grid(row=0, column=1, sticky='ns', padx=2, pady=2)
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        # Set the scrollbars to the canvas
-        self.cnvs.config(xscrollcommand=self.h_scroll.set, yscrollcommand=self.v_scroll.set)
-        # Set canvas view to the scrollbars
-        self.v_scroll.config(command=self.cnvs.yview)
-        self.h_scroll.config(command=self.cnvs.xview)
-        # Assign the region to be scrolled
-        self.cnvs.config(scrollregion=self.cnvs.bbox('all'))
-        self.cnvs.bind_class(self.cnvs, "<MouseWheel>", self.mouse_scroll)
-
-    def mouse_scroll(self, evt):
-        if evt.state == 0:
-            self.cnvs.yview_scroll(int(-1*(evt.delta/120)), 'units')
-        if evt.state == 1:
-            self.cnvs.xview_scroll(int(-1*(evt.delta/120)), 'units')
-
-
 class ScrollbarFrame(tk.Frame):
-    """
-    Extends class tk.Frame to support a scrollable Frame
-    This class is independent from the widgets to be scrolled and
-    can be used to replace a standard tk.Frame
-    """
+
     def __init__(self, parent, **kwargs):
         tk.Frame.__init__(self, parent, **kwargs)
 
-        # The Scrollbar, layout to the right
+        # create Scrollbars
         vsb = tk.Scrollbar(self, orient="vertical")
         vsb.pack(side="right", fill="y")
+        hsb = tk.Scrollbar(self, orient="horizontal")
+        hsb.pack(side="bottom", fill="x")
 
         # The Canvas which supports the Scrollbar Interface, layout to the left
         self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
@@ -88,6 +54,8 @@ class ScrollbarFrame(tk.Frame):
         # Bind the Scrollbar to the self.canvas Scrollbar Interface
         self.canvas.configure(yscrollcommand=vsb.set)
         vsb.configure(command=self.canvas.yview)
+        self.canvas.configure(xscrollcommand=hsb.set)
+        hsb.configure(command=self.canvas.xview)
 
         # The Frame to be scrolled, layout into the canvas
         # All widgets to be scrolled have to use this Frame as parent
@@ -104,41 +72,80 @@ class ScrollbarFrame(tk.Frame):
 
 class App(tk.Tk):
 
+    class ScrollableImage(tk.Frame):
+        def __init__(self, master=None, **kw):
+            self.image = kw.pop('image', None)
+            sw = kw.pop('scrollbarwidth', 10)
+            super(App.ScrollableImage, self).__init__(master=master, **kw)
+            self.cnvs = tk.Canvas(self, highlightthickness=0, **kw)
+            self.cnvs.create_image(0, 0, anchor='nw', image=self.image)
+
+            # Vertical and Horizontal scrollbars
+            self.v_scroll = tk.Scrollbar(self, orient='vertical', width=sw)
+            self.h_scroll = tk.Scrollbar(self, orient='horizontal', width=sw)
+
+            # Grid and configure weight.
+            self.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
+            self.h_scroll.grid(row=1, column=0, sticky='ew', padx=2, pady=2)
+            self.v_scroll.grid(row=0, column=1, sticky='ns', padx=2, pady=2)
+            self.rowconfigure(0, weight=1)
+            self.columnconfigure(0, weight=1)
+
+            # Set the scrollbars to the canvas
+            self.cnvs.config(xscrollcommand=self.h_scroll.set, yscrollcommand=self.v_scroll.set)
+            # Set canvas view to the scrollbars
+            self.v_scroll.config(command=self.cnvs.yview)
+            self.h_scroll.config(command=self.cnvs.xview)
+
+            # Assign the region to be scrolled
+            self.cnvs.config(scrollregion=self.cnvs.bbox('all'))
+            self.cnvs.bind_class(self.cnvs, "<MouseWheel>", self.mouse_scroll)
+
+        def mouse_scroll(self, evt):
+            if evt.state == 0:
+                self.cnvs.yview_scroll(int(-1 * (evt.delta / 120)), 'units')
+            if evt.state == 1:
+                self.cnvs.xview_scroll(int(-1 * (evt.delta / 120)), 'units')
+
     def __init__(self, *args, **kwargs):
         global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window
 
-        # tk.Frame.__init__(self, *args, **kwargs)
         super().__init__()
-
         sbf = ScrollbarFrame(self)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         sbf.grid(row=0, column=0, sticky='nsew')
-        # sbf.pack(side="top", fill="both", expand=True)
         self.title("Image Compare Tool")
-        # Some data, layout into the sbf.scrolled_frame
+
+        #creates scrollable Frame for the App
         frame = sbf.scrolled_frame
 
+    #create Buttons
+
+        #loading buttons
         btn1 = tk.Button(frame, text='Load image1', command=create_img1)
         btn2 = tk.Button(frame, text='Load image2', command=create_img2)
         btn3 = tk.Button(frame, text="show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
 
+        #movement buttons
         btnup = tk.Button(frame, text='up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
-
         btndown = tk.Button(frame, text='down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
         btnright = tk.Button(frame, text='right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
         btnleft = tk.Button(frame, text='left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
-
         btnreset = tk.Button(frame, text='reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
+
+        #stepsize buttons
         btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
         btnstep10 = tk.Button(frame, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
         btnstep25 = tk.Button(frame, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
         # btnstep50 = tk.Button(frame, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
 
+        #zoom buttons
         btnzoomin = tk.Button(frame, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
         btnresetzoom = tk.Button(frame, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
 
+        #match button + slider + text
         btnmatch = tk.Button(frame, text='Match', command=lambda *args: App.match(self, img1orig, img2orig, frame))
         matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
         matchthresholdslider.set(80)
@@ -148,6 +155,7 @@ class App(tk.Tk):
         btnsmaller = tk.Button(frame, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, frame))
         btnresetsize = tk.Button(frame, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, frame))
 
+        #button settings
         btn1.config(width=20, height=2)
         btn2.config(width=20, height=2)
         btn3.config(width=20, height=2)
@@ -159,7 +167,6 @@ class App(tk.Tk):
         btnstep1.config(width=8, height=2)
         btnstep10.config(width=8, height=2)
         btnstep25.config(width=8, height=2)
-
         btnzoomin.config(width=8, height=2)
         btnzoomout.config(width=8, height=2)
         btnresetzoom.config(width=8, height=2)
@@ -170,6 +177,7 @@ class App(tk.Tk):
         btnsmaller.config(width=8, height=2)
         btnresetsize.config(width=8, height=2)
 
+        #button locations
         btn1.grid(row=0, column=0, columnspan=3)
         btn2.grid(row=1, column=0, columnspan=3)
         btn3.grid(row=2, column=0, columnspan=3)
@@ -192,28 +200,13 @@ class App(tk.Tk):
         btnsmaller.grid(row=11, column=2)
         btnresetsize.grid(row=11, column=1)
 
+        #keyboard hotkeys assign
         keyboard.add_hotkey('+', lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
         keyboard.add_hotkey('-', lambda *args: App.zoom_out(self, img1orig, img2orig, frame))
         keyboard.add_hotkey('a', lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
         keyboard.add_hotkey('d', lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
         keyboard.add_hotkey('s', lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
         keyboard.add_hotkey('w', lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
-
-        image1_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
-                                        height=300 * imagefactor)
-        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
-
-        image2_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
-                                        height=300 * imagefactor)
-        image2_window.grid(row=0, column=12, rowspan=6, columnspan=8)
-
-        image3_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
-                                        height=300 * imagefactor)
-        image3_window.grid(row=6, column=4, rowspan=6, columnspan=8)
-
-        image4_window = ScrollableImage(frame,  scrollbarwidth=6, width=400 * imagefactor,
-                                        height=300 * imagefactor)
-        image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
 
     def increase_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -303,6 +296,12 @@ class App(tk.Tk):
     def increase_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = imagefactor * 1.1
+
+        image1_window.destroy()
+        image2_window.destroy()
+        image3_window.destroy()
+        image4_window.destroy()
+
         if matched:
             App.show_combined(self, img1matched, img2matched, frame)
         else:
@@ -311,6 +310,12 @@ class App(tk.Tk):
     def decrease_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = imagefactor / 1.1
+
+        image1_window.destroy()
+        image2_window.destroy()
+        image3_window.destroy()
+        image4_window.destroy()
+
         if matched:
             App.show_combined(self, img1matched, img2matched, frame)
         else:
@@ -319,6 +324,12 @@ class App(tk.Tk):
     def reset_imagesize(self, img1, img2, frame):
         global imagefactor
         imagefactor = 1
+
+        image1_window.destroy()
+        image2_window.destroy()
+        image3_window.destroy()
+        image4_window.destroy()
+
         if matched:
             App.show_combined(self, img1matched, img2matched, frame)
         else:
@@ -328,17 +339,20 @@ class App(tk.Tk):
         global manual_offset
         global offset_x, offset_y
 
+        #calc image dimensions
         image1height = image1.shape[0]
         image2height = image2.shape[0]
         image1width = image1.shape[1]
         image2width = image2.shape[1]
 
-        img1 = image1.copy()
-        img2 = image2.copy()
-
         diffheight = image1height - image2height
         diffwidth = image1width - image2width
 
+        img1 = image1.copy()
+        img2 = image2.copy()
+
+
+        #bring images to same size
         if diffheight > 0:
             img2 = cv2.copyMakeBorder(img2, 0, diffheight, 0, 0, cv2.BORDER_REPLICATE)
         else:
@@ -353,6 +367,8 @@ class App(tk.Tk):
 
         # cv2.imshow("img1", img1)
         # cv2.imshow("img2", img2)
+
+        #create combined half transparent image
 
         if offset_x == 0 and offset_y == 0:
             combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
@@ -434,11 +450,11 @@ class App(tk.Tk):
         gray1 = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
         gray2 = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
 
-        # Find difference
+        # find difference
 
         diff = cv2.absdiff(gray1, gray2)
 
-        # Threshold
+        # create threshold image
 
         ret, thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY)
 
@@ -447,7 +463,8 @@ class App(tk.Tk):
         contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
 
-        # Loop over contours for drawing rectangles
+        # loop over contours for drawing rectangles
+
         result1 = img1.copy()
         result2 = img2.copy()
 
@@ -470,6 +487,7 @@ class App(tk.Tk):
         App.set_matchtext(self, matchtext)
         img1, img2, combined = App.resize_and_combine_images(self,img1,img2, frame)
 
+        #change dimension by zoom setting
         dimx = img1.shape[1]
         dimy = img1.shape[0]
 
@@ -478,6 +496,7 @@ class App(tk.Tk):
 
         newdim = (dimx, dimy)
 
+        #create the 4 different images to be viewed
         img1, img2, combined, thresh, result1, result2 = App.calc_differences(self,img1, img2, frame)
 
         combined = cv2.resize(combined, newdim)
@@ -485,9 +504,14 @@ class App(tk.Tk):
         result1 = cv2.resize(result1, newdim)
         result2 = cv2.resize(result2, newdim)
 
-        height, width, no_channels = combined.shape
-        width = 250
-        height = 250
+        #convert cv2image to photoimage for gui display
+
+        photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(combined))
+        photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(thresh))
+        photo3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
+        photo4 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
+
+        #create scrollable images
 
         # def multiple_yview(*args):
         #     image1_window.cnvs.yview(*args)
@@ -501,41 +525,34 @@ class App(tk.Tk):
         #     image3_window.cnvs.xview(*args)
         #     image4_window.cnvs.xview(*args)
 
-        photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(combined))
-        photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(thresh))
-        photo3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
-        photo4 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
+        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
 
-        # image1_window.cnvs.delete("all")
-        # image2_window.cnvs.delete("all")
-        # image3_window.cnvs.delete("all")
-        # image4_window.cnvs.delete("all")
-
-        image1_window.destroy()
-        image2_window.destroy()
-        image3_window.destroy()
-        image4_window.destroy()
-
-
-        image1_window = ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
-        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
-
-        image2_window = ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
         image2_window.grid(row=0, column=12, rowspan=6, columnspan=8)
 
-        image3_window = ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
         image3_window.grid(row=6, column=4, rowspan=6, columnspan=8)
 
-        image4_window = ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
+        image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor)
         image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
 
+        # image1_window.cnvs.create_image(0, 0, anchor='nw', image=image1_window.image)
+        # image1_window.v_scroll = tk.Scrollbar(image1_window, orient='vertical', width=10)
+        # image1_window.h_scroll = tk.Scrollbar(image1_window, orient='horizontal', width=10)
+        # image1_window.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
+        # image1_window.h_scroll.grid(row=1, column=0, sticky='ew', padx=2, pady=2)
+        # image1_window.v_scroll.grid(row=0, column=1, sticky='ns', padx=2, pady=2)
         # image1_window.cnvs.config(xscrollcommand=image1_window.h_scroll.set, yscrollcommand=image1_window.v_scroll.set)
+        # image1_window.v_scroll.config(command=image1_window.cnvs.yview())
+        # image1_window.h_scroll.config(command=image1_window.cnvs.xview())
+        # image1_window.cnvs.config(scrollregion=image1_window.cnvs.bbox('all'))
+        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
+
+
         # image2_window.cnvs.config(xscrollcommand=image1_window.h_scroll.set, yscrollcommand=image1_window.v_scroll.set)
         # image3_window.cnvs.config(xscrollcommand=image1_window.h_scroll.set, yscrollcommand=image1_window.v_scroll.set)
         # image4_window.cnvs.config(xscrollcommand=image1_window.h_scroll.set, yscrollcommand=image1_window.v_scroll.set)
-        #
-        # image1_window.v_scroll.config(command=image2_window.cnvs.yview())
-        # image1_window.h_scroll.config(command=image2_window.cnvs.xview())
+
 
         # image2_window.v_scroll.config(command=multiple_yview())
         # image2_window.h_scroll.config(command=multiple_xview())
@@ -543,45 +560,6 @@ class App(tk.Tk):
         # image3_window.h_scroll.config(command=multiple_xview())
         # image4_window.v_scroll.config(command=multiple_yview())
         # image4_window.h_scroll.config(command=multiple_xview())
-
-
-        # canvas1 = tk.Canvas(frame)
-        # canvas1.create_image(0, 0, image=photo1, anchor=tk.NW)
-        # canvas1.grid(row=0, column=4, rowspan=6, columnspan=8)
-        #
-        # canvas2 = tk.Canvas(frame)
-        # canvas2.create_image(0, 0, image=photo2, anchor=tk.NW)
-        # canvas2.grid(row=0, column=12, rowspan=6, columnspan=8)
-        #
-        # canvas3 = tk.Canvas(frame)
-        # canvas3.create_image(0, 0, image=photo3, anchor=tk.NW)
-        # canvas3.grid(row=6, column=4, rowspan=6, columnspan=8)
-        #
-        # canvas4 = tk.Canvas(frame)
-        # canvas4.create_image(0, 0, image=photo4, anchor=tk.NW)
-        # canvas4.grid(row=6, column=12, rowspan=6, columnspan=8)
-
-        # image_scroll = tk.Scrollbar(frame, orient="vertical", command=multiple_yview())
-        # image_scroll.grid(row=0, column=21, sticky="e")
-
-        # canvas1.config(yscrollcommand=image_scroll)
-        # canvas1.config(scrollregion=canvas1.bbox("all"))
-        # canvas2.config(yscrollcommand=image_scroll)
-        # canvas2.config(scrollregion=canvas1.bbox("all"))
-        # canvas3.config(yscrollcommand=image_scroll)
-        # canvas3.config(scrollregion=canvas1.bbox("all"))
-        # canvas4.config(yscrollcommand=image_scroll)
-        # canvas4.config(scrollregion=canvas1.bbox("all"))
-
-
-        # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result1))
-        # canvas5 = tk.Canvas(frame)
-        # canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
-        # canvas5.grid(row=7, column=4, rowspan=3, columnspan=3)
-        # photo6 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(result2))
-        # canvas6 = tk.Canvas(frame)
-        # canvas6.create_image(0, 0, image=photo6, anchor=tk.NW)
-        # canvas6.grid(row=7, column=7, rowspan=3, columnspan=3)
 
     def get_Matchthresh(self):
         global matchthresholdslider, matchthreshold
@@ -599,6 +577,7 @@ class App(tk.Tk):
         App.reset_offsets(self, img1orig, img2orig, frame)
         App.get_Matchthresh(self)
 
+        #calc image dimensions
         image1height = image1.shape[0]
         image2height = image2.shape[0]
         image1width = image1.shape[1]
@@ -609,6 +588,8 @@ class App(tk.Tk):
 
         img1area = image1height*image1width
         img2area = image2height*image2width
+
+        #check if one image is smaller in both dimensions and then match the smaller image into the bigger one
 
         if img1area>img2area:
 
@@ -643,17 +624,19 @@ class App(tk.Tk):
 
                 if img1area > img2area:
 
-                    bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
+                    #bottom_right = (top_left[0] + image2width, top_left[1] + image2height)
                     #cv2.rectangle(img1, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
                     #cv2.imshow("img1rect",img1)
+
                     img1matched = img1matched[top_left[1]:top_left[1]+image2height, top_left[0]:top_left[0]+image2width]
 
                     photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1matched))
 
                 else:
-                    bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
+                    #bottom_right = (top_left[0] + image1width, top_left[1] + image1height)
                     #cv2.rectangle(img2, top_left, bottom_right, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_4)
                     #cv2.imshow("img2rect", img2)
+
                     img2matched = img2matched[top_left[1]:top_left[1] + image1height, top_left[0]:top_left[0] + image1width]
 
                     photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img2matched))
@@ -666,6 +649,7 @@ class App(tk.Tk):
                 matchtext = 'No match'
 
         App.set_matchtext(self, matchtext)
+
         # photo5 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(img1))
         # canvas5 = tk.Canvas(frame)
         # canvas5.create_image(0, 0, image=photo5, anchor=tk.NW)
