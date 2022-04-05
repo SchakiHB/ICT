@@ -8,7 +8,8 @@ import keyboard    #keyboard inputs
 from functools import partial
 # from pynput.keyboard import Key, Listener
 
-zoom = 1
+transparency=0.7
+zoom = 0.8
 offset_x = 0
 offset_y = 0
 matchthreshold = 0.7
@@ -113,7 +114,7 @@ class App(tk.Tk):
                 self.cnvs.xview_scroll(int(-1 * (evt.delta / 120)), 'units')
 
     def __init__(self, *args, **kwargs):
-        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window, keyboard_active
+        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window, keyboard_active, transparency
 
         super().__init__()
         sbf = ScrollbarFrame(self)
@@ -131,7 +132,11 @@ class App(tk.Tk):
         #loading Images
         btn1 = tk.Button(frame, text='Load first Image', command=create_img1)
         btn2 = tk.Button(frame, text='Load second Image', command=create_img2)
+
+        #combine button and transparency slider
         btn3 = tk.Button(frame, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
+        transparency = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,frame, transparency))
+        trans_label = tk.Label(frame, text="Transparency:")
 
         #movement
         btnup = tk.Button(frame, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
@@ -157,6 +162,7 @@ class App(tk.Tk):
         matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
         thresh_label = tk.Label(frame, text="Similarity:")
         matchthresholdslider.set(80)
+        transparency.set(70)
         matchthreshold = matchthresholdslider.get()/100
         matchstatus = tk.Text(frame, height=1, width=20)
         btnbigger = tk.Button(frame, text='Bigger', command=lambda *args: App.increase_imagesize(self,img1orig, img2orig, frame))
@@ -184,31 +190,34 @@ class App(tk.Tk):
         btnbigger.config(width=8, height=2)
         btnsmaller.config(width=8, height=2)
         btnresetsize.config(width=8, height=2)
+        transparency.config(width=10)
 
-        #button locations
+        #button, etc... locations
         btn1.grid(row=0, column=0, columnspan=3)
         btn2.grid(row=1, column=0, columnspan=3)
         btn3.grid(row=2, column=0, columnspan=3)
-        btnstep1.grid(row=6, column=0)
-        btnstep10.grid(row=6, column=1)
-        btnstep25.grid(row=6, column=2)
+        trans_label.grid(row=3, column=0)
+        transparency.grid(row=3, column=1, columnspan=2)
+        btnstep1.grid(row=8, column=0)
+        btnstep10.grid(row=8, column=1)
+        btnstep25.grid(row=8, column=2)
  #       btnstep50.grid(row=6, column=3)
-        btnup.grid(row=3, column=1)
-        btndown.grid(row=5, column=1)
-        btnleft.grid(row=4, column=0)
-        btnright.grid(row=4, column=2)
-        btnreset.grid(row=4, column=1)
-        btnzoomin.grid(row=7, column=0)
-        btnzoomout.grid(row=7, column=2)
-        btnresetzoom.grid(row=7, column=1)
-        thresh_label.grid(row=8, column=0)
-        matchthresholdslider.grid(row=8, column=1,columnspan=2)
-        btnmatch.grid(row=9, column=0, columnspan=3)
-        matchstatus.grid(row=10, column=0, columnspan=3)
-        btnbigger.grid(row=11, column=0)
-        btnsmaller.grid(row=11, column=2)
-        btnresetsize.grid(row=11, column=1)
-        keyboarduse.grid(row=12, column=0, columnspan=3)
+        btnup.grid(row=5, column=1)
+        btndown.grid(row=7, column=1)
+        btnleft.grid(row=6, column=0)
+        btnright.grid(row=6, column=2)
+        btnreset.grid(row=6, column=1)
+        btnzoomin.grid(row=9, column=0)
+        btnzoomout.grid(row=9, column=2)
+        btnresetzoom.grid(row=9, column=1)
+        thresh_label.grid(row=10, column=0)
+        matchthresholdslider.grid(row=10, column=1,columnspan=2)
+        btnmatch.grid(row=11, column=0, columnspan=3)
+        matchstatus.grid(row=12, column=0, columnspan=3)
+        btnbigger.grid(row=13, column=0)
+        btnsmaller.grid(row=13, column=2)
+        btnresetsize.grid(row=13, column=1)
+        keyboarduse.grid(row=14, column=0, columnspan=3)
 
     def activate_keys(self, img1, img2, frame):
         #keyboard hotkeys assign
@@ -223,6 +232,19 @@ class App(tk.Tk):
             keyboard.clear_all_hotkeys()
 
         print(keyboard_active.get())
+
+    def update_transparency(self, img1, img2, frame, transparencynew):
+        global transparency
+
+        transparency=transparencynew
+
+        img1 = img1.copy()
+        img2 = img2.copy()
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
+
 
     def increase_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -352,7 +374,7 @@ class App(tk.Tk):
             App.show_combined(self,img1, img2, frame)
 
     def resize_and_combine_images(self, image1, image2, frame):
-        global manual_offset
+        global manual_offset, transparency
         global offset_x, offset_y
 
         #calc image dimensions
@@ -386,8 +408,11 @@ class App(tk.Tk):
 
         #create combined half transparent image
 
+        trans1 = transparency.get()/100
+        trans2 = 1-trans1
+
         if offset_x == 0 and offset_y == 0:
-            combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
+            combined = cv2.addWeighted(img1, trans1, img2, trans2, 0)
 
         else:
 
