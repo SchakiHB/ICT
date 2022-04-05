@@ -19,10 +19,11 @@ matched = False
 matchtext = "not matched"
 img1matched = cv2.imread("images/img1.png")
 img2matched = cv2.imread("images/img1.png")
-global img1orig
-global img2orig
+# global img1orig
+# global img2orig
 img1orig = cv2.imread("images/img1.png")
 img2orig = cv2.imread("images/img1.png")
+imagewindows_active=False
 
 
 def create_img1():
@@ -48,22 +49,21 @@ class ScrollbarFrame(tk.Frame):
         hsb = tk.Scrollbar(self, orient="horizontal")
         hsb.pack(side="bottom", fill="x")
 
-        # The Canvas which supports the Scrollbar Interface, layout to the left
+        # Canvas for scrollbar
         self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        # Bind the Scrollbar to the self.canvas Scrollbar Interface
+        # Bind Scrollbar canvas
         self.canvas.configure(yscrollcommand=vsb.set)
         vsb.configure(command=self.canvas.yview)
         self.canvas.configure(xscrollcommand=hsb.set)
         hsb.configure(command=self.canvas.xview)
 
-        # The Frame to be scrolled, layout into the canvas
-        # All widgets to be scrolled have to use this Frame as parent
+        # scrollable Frame
         self.scrolled_frame = tk.Frame(self.canvas, background=self.canvas.cget('bg'))
         self.canvas.create_window((4, 4), window=self.scrolled_frame, anchor="nw")
 
-        # Configures the scrollregion of the Canvas dynamically
+        # scrollregion
         self.scrolled_frame.bind("<Configure>", self.on_configure)
 
     def on_configure(self, event):
@@ -89,20 +89,20 @@ class App(tk.Tk):
             self.label = tk.Label(self, text=label)
             self.label.grid(row=0, column=0, sticky='nw', padx=2, pady=2)
 
-            # Grid and configure weight.
+            # Grid and weight
             self.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
             self.h_scroll.grid(row=1, column=0, sticky='ew', padx=2, pady=2)
             self.v_scroll.grid(row=0, column=1, sticky='ns', padx=2, pady=2)
             self.rowconfigure(0, weight=1)
             self.columnconfigure(0, weight=1)
 
-            # Set the scrollbars to the canvas
+            # Set scrollbars to canvas
             self.cnvs.config(xscrollcommand=self.h_scroll.set, yscrollcommand=self.v_scroll.set)
-            # Set canvas view to the scrollbars
+            # Set canvas view to scrollbars
             self.v_scroll.config(command=self.cnvs.yview)
             self.h_scroll.config(command=self.cnvs.xview)
 
-            # Assign the region to be scrolled
+            # Assign scrollregion
             self.cnvs.config(scrollregion=self.cnvs.bbox('all'))
             self.cnvs.bind_class(self.cnvs, "<MouseWheel>", self.mouse_scroll)
 
@@ -125,7 +125,8 @@ class App(tk.Tk):
         #creates scrollable Frame for the App
         frame = sbf.scrolled_frame
         keyboard_active = tk.BooleanVar(frame)
-    #create Buttons and such
+
+        #create Buttons, etc ..
 
         #loading Images
         btn1 = tk.Button(frame, text='Load first Image', command=create_img1)
@@ -497,10 +498,16 @@ class App(tk.Tk):
         App.show_combined(self, img1, img2, frame)
 
     def show_combined(self, img1, img2, frame):
-        global photo1, photo2, photo3, photo4, photo5, photo6, zoom, image1_window, image2_window, image3_window, image4_window, matchtext
+        global photo1, photo2, photo3, photo4, photo5, photo6, zoom, image1_window, image2_window, image3_window, image4_window, matchtext, imagewindows_active
 
         App.set_matchtext(self, matchtext)
         img1, img2, combined = App.resize_and_combine_images(self,img1,img2, frame)
+
+        if imagewindows_active:
+            image1_window.destroy()
+            image2_window.destroy()
+            image3_window.destroy()
+            image4_window.destroy()
 
         #change dimension by zoom setting
         dimx = img1.shape[1]
@@ -551,6 +558,8 @@ class App(tk.Tk):
 
         image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 2")
         image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
+
+        imagewindows_active = True
 
         # image1_window.cnvs.create_image(0, 0, anchor='nw', image=image1_window.image)
         # image1_window.v_scroll = tk.Scrollbar(image1_window, orient='vertical', width=10)
