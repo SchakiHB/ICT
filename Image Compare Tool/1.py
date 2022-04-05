@@ -313,10 +313,10 @@ class App(tk.Tk):
         global imagefactor
         imagefactor = imagefactor * 1.1
 
-        image1_window.destroy()
-        image2_window.destroy()
-        image3_window.destroy()
-        image4_window.destroy()
+        # image1_window.destroy()
+        # image2_window.destroy()
+        # image3_window.destroy()
+        # image4_window.destroy()
 
         if matched:
             App.show_combined(self, img1matched, img2matched, frame)
@@ -327,10 +327,10 @@ class App(tk.Tk):
         global imagefactor
         imagefactor = imagefactor / 1.1
 
-        image1_window.destroy()
-        image2_window.destroy()
-        image3_window.destroy()
-        image4_window.destroy()
+        # image1_window.destroy()
+        # image2_window.destroy()
+        # image3_window.destroy()
+        # image4_window.destroy()
 
         if matched:
             App.show_combined(self, img1matched, img2matched, frame)
@@ -503,6 +503,7 @@ class App(tk.Tk):
         App.set_matchtext(self, matchtext)
         img1, img2, combined = App.resize_and_combine_images(self,img1,img2, frame)
 
+        #destroy old image_windows if needed
         if imagewindows_active:
             image1_window.destroy()
             image2_window.destroy()
