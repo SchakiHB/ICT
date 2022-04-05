@@ -9,6 +9,7 @@ from functools import partial
 # from pynput.keyboard import Key, Listener
 
 transparency=0.7
+binarisationthresh=0
 zoom = 0.8
 offset_x = 0
 offset_y = 0
@@ -114,7 +115,7 @@ class App(tk.Tk):
                 self.cnvs.xview_scroll(int(-1 * (evt.delta / 120)), 'units')
 
     def __init__(self, *args, **kwargs):
-        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window, keyboard_active, transparency
+        global img1orig,img2orig, matchthreshold, matchthresholdslider, matchtext, matchstatus, image1_window, image2_window, image3_window, image4_window, keyboard_active, transparency, binarise_active
 
         super().__init__()
         sbf = ScrollbarFrame(self)
@@ -126,6 +127,7 @@ class App(tk.Tk):
         #creates scrollable Frame for the App
         frame = sbf.scrolled_frame
         keyboard_active = tk.BooleanVar(frame)
+        binarise_active = tk.BooleanVar(frame)
 
         #create Buttons, etc ..
 
@@ -133,10 +135,14 @@ class App(tk.Tk):
         btn1 = tk.Button(frame, text='Load first Image', command=create_img1)
         btn2 = tk.Button(frame, text='Load second Image', command=create_img2)
 
-        #combine button and transparency slider
+        #combine button and transparency/binarization slider
         btn3 = tk.Button(frame, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
         transparency = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,frame, transparency))
         trans_label = tk.Label(frame, text="Transparency:")
+        transparency.set(70)
+        binarisationthresh = tk.Scale(frame, from_=0, to=255, orient=tk.HORIZONTAL, command=lambda *args: App.update_binarisation_thresh(self,img1orig, img2orig,frame, binarisationthresh))
+        binarise_label = tk.Label(frame, text="Diff Thresh:")
+        binarisationthresh.set(1)
 
         #movement
         btnup = tk.Button(frame, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
@@ -145,6 +151,7 @@ class App(tk.Tk):
         btnleft = tk.Button(frame, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
         btnreset = tk.Button(frame, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
         keyboarduse = tk.Checkbutton(frame, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, frame))
+        binarisation = tk.Checkbutton(frame, text="activate Binarisation", variable=binarise_active, onvalue=True, offvalue=False, command=lambda *args: App.show_combined(self,img1orig, img2orig, frame))
 
         #stepsize buttons
         btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
@@ -162,7 +169,6 @@ class App(tk.Tk):
         matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
         thresh_label = tk.Label(frame, text="Similarity:")
         matchthresholdslider.set(80)
-        transparency.set(70)
         matchthreshold = matchthresholdslider.get()/100
         matchstatus = tk.Text(frame, height=1, width=20)
         btnbigger = tk.Button(frame, text='Bigger', command=lambda *args: App.increase_imagesize(self,img1orig, img2orig, frame))
@@ -191,6 +197,7 @@ class App(tk.Tk):
         btnsmaller.config(width=8, height=2)
         btnresetsize.config(width=8, height=2)
         transparency.config(width=10)
+        binarisationthresh.config(width=10)
 
         #button, etc... locations
         btn1.grid(row=0, column=0, columnspan=3)
@@ -198,6 +205,9 @@ class App(tk.Tk):
         btn3.grid(row=2, column=0, columnspan=3)
         trans_label.grid(row=3, column=0)
         transparency.grid(row=3, column=1, columnspan=2)
+        binarise_label.grid(row=4, column=0)
+        binarisationthresh.grid(row=4, column=1, columnspan=2)
+
         btnstep1.grid(row=8, column=0)
         btnstep10.grid(row=8, column=1)
         btnstep25.grid(row=8, column=2)
@@ -218,6 +228,7 @@ class App(tk.Tk):
         btnsmaller.grid(row=13, column=2)
         btnresetsize.grid(row=13, column=1)
         keyboarduse.grid(row=14, column=0, columnspan=3)
+        binarisation.grid(row=15, column=0, columnspan=3)
 
     def activate_keys(self, img1, img2, frame):
         #keyboard hotkeys assign
@@ -233,6 +244,7 @@ class App(tk.Tk):
 
         print(keyboard_active.get())
 
+
     def update_transparency(self, img1, img2, frame, transparencynew):
         global transparency
 
@@ -245,6 +257,17 @@ class App(tk.Tk):
         else:
             App.show_combined(self, img1, img2, frame)
 
+    def update_binarisation_thresh(self, img1, img2, frame, binarisationnew):
+        global binarisationthresh
+
+        binarisationthresh = binarisationnew
+
+        img1 = img1.copy()
+        img2 = img2.copy()
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
 
     def increase_offset_x(self, img1, img2, frame):
         global manual_offset, offset_x, stepsize
@@ -473,14 +496,14 @@ class App(tk.Tk):
             # cv2.imshow("img1resized", img1)
             # cv2.imshow("img2resized", img2)
 
-            combined = cv2.addWeighted(img1, 0.7, img2, 0.3, 0)
+            combined = cv2.addWeighted(img1, trans1, img2, trans2, 0)
 
 
 
         return img1, img2, combined
 
     def calc_differences(self, image1, image2, frame):
-
+        global binarisationthresh, binarise_active
         resizedimage1, resizedimage2, combined = App.resize_and_combine_images(self,image1, image2, frame)
 
         img1 = resizedimage1.copy()
@@ -496,8 +519,12 @@ class App(tk.Tk):
         diff = cv2.absdiff(gray1, gray2)
 
         # create threshold image
+        if binarise_active.get():
+            bin_thresh = binarisationthresh.get()
+            ret, thresh = cv2.threshold(diff, bin_thresh, 255, cv2.THRESH_BINARY)
 
-        ret, thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY)
+        else:
+            thresh=diff
 
         # contour-search
 
