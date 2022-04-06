@@ -69,7 +69,7 @@ class ScrollbarFrame(tk.Frame):
         self.scrolled_frame.bind("<Configure>", self.on_configure)
 
     def on_configure(self, event):
-        """Set the scroll region to encompass the scrolled frame"""
+        #scrollregion
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
@@ -89,7 +89,7 @@ class App(tk.Tk):
             self.h_scroll = tk.Scrollbar(self, orient='horizontal', width=sw)
 
             self.label = tk.Label(self, text=label)
-            self.label.grid(row=0, column=0, sticky='nw', padx=2, pady=2)
+            self.label.grid(row=0, column=0, sticky='ews', padx=2, pady=2)
 
             # Grid and weight
             self.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
@@ -243,7 +243,6 @@ class App(tk.Tk):
             keyboard.clear_all_hotkeys()
 
         print(keyboard_active.get())
-
 
     def update_transparency(self, img1, img2, frame, transparencynew):
         global transparency
@@ -600,10 +599,10 @@ class App(tk.Tk):
         #     image3_window.cnvs.xview(*args)
         #     image4_window.cnvs.xview(*args)
 
-        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined")
+        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined Image")
         image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
 
-        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Binarised diff")
+        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Difference Image")
         image2_window.grid(row=0, column=12, rowspan=6, columnspan=8)
 
         image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 1")
