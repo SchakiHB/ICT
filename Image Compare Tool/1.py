@@ -73,6 +73,7 @@ class ScrollbarFrame(tk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
+
 class App(tk.Tk):
 
     class ScrollableImage(tk.Frame):
@@ -89,12 +90,12 @@ class App(tk.Tk):
             self.h_scroll = tk.Scrollbar(self, orient='horizontal', width=sw)
 
             self.label = tk.Label(self, text=label)
-            self.label.grid(row=0, column=0, sticky='ews', padx=2, pady=2)
+            self.label.grid(row=1, column=0, sticky='ews', padx=2, pady=2)
 
             # Grid and weight
-            self.cnvs.grid(row=0, column=0, sticky='nsew', padx=2, pady=2)
-            self.h_scroll.grid(row=1, column=0, sticky='ew', padx=2, pady=2)
-            self.v_scroll.grid(row=0, column=1, sticky='ns', padx=2, pady=2)
+            self.cnvs.grid(row=0, column=0, sticky='nw', padx=2, pady=2)
+            self.h_scroll.grid(row=2, column=0, sticky='ews', padx=2, pady=2)
+            self.v_scroll.grid(row=0, column=1, sticky='nws', padx=2, pady=2)
             self.rowconfigure(0, weight=1)
             self.columnconfigure(0, weight=1)
 
@@ -129,51 +130,55 @@ class App(tk.Tk):
         keyboard_active = tk.BooleanVar(frame)
         binarise_active = tk.BooleanVar(frame)
 
+        Menu = tk.Frame(frame)
+        Imageviewer = tk.Frame(frame)
+        Menu.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        Imageviewer.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.BOTH)
         #create Buttons, etc ..
 
         #loading Images
-        btn1 = tk.Button(frame, text='Load first Image', command=create_img1)
-        btn2 = tk.Button(frame, text='Load second Image', command=create_img2)
+        btn1 = tk.Button(Menu, text='Load first Image', command=create_img1)
+        btn2 = tk.Button(Menu, text='Load second Image', command=create_img2)
 
         #combine button and transparency/binarization slider
-        btn3 = tk.Button(frame, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,frame))
-        transparency = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,frame, transparency))
-        trans_label = tk.Label(frame, text="Transparency:")
+        btn3 = tk.Button(Menu, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,Imageviewer))
+        transparency = tk.Scale(Menu, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,Imageviewer, transparency))
+        trans_label = tk.Label(Menu, text="Transparency:")
         transparency.set(70)
-        binarisationthresh = tk.Scale(frame, from_=0, to=255, orient=tk.HORIZONTAL, command=lambda *args: App.update_binarisation_thresh(self,img1orig, img2orig,frame, binarisationthresh))
-        binarise_label = tk.Label(frame, text="Diff Thresh:")
+        binarisationthresh = tk.Scale(Menu, from_=0, to=255, orient=tk.HORIZONTAL, command=lambda *args: App.update_binarisation_thresh(self,img1orig, img2orig,Imageviewer, binarisationthresh))
+        binarise_label = tk.Label(Menu, text="Diff Thresh:")
         binarisationthresh.set(1)
 
         #movement
-        btnup = tk.Button(frame, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, frame))
-        btndown = tk.Button(frame, text='Down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, frame))
-        btnright = tk.Button(frame, text='Right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, frame))
-        btnleft = tk.Button(frame, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, frame))
-        btnreset = tk.Button(frame, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, frame))
-        keyboarduse = tk.Checkbutton(frame, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, frame))
-        binarisation = tk.Checkbutton(frame, text="activate Binarisation", variable=binarise_active, onvalue=True, offvalue=False, command=lambda *args: App.show_combined(self,img1orig, img2orig, frame))
+        btnup = tk.Button(Menu, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, Imageviewer))
+        btndown = tk.Button(Menu, text='Down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, Imageviewer))
+        btnright = tk.Button(Menu, text='Right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, Imageviewer))
+        btnleft = tk.Button(Menu, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, Imageviewer))
+        btnreset = tk.Button(Menu, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, Imageviewer))
+        keyboarduse = tk.Checkbutton(Menu, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, Imageviewer))
+        binarisation = tk.Checkbutton(Menu, text="activate Binarisation", variable=binarise_active, onvalue=True, offvalue=False, command=lambda *args: App.show_combined(self,img1orig, img2orig, Imageviewer))
 
         #stepsize buttons
-        btnstep1 = tk.Button(frame, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
-        btnstep10 = tk.Button(frame, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
-        btnstep25 = tk.Button(frame, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
-        # btnstep50 = tk.Button(frame, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
+        btnstep1 = tk.Button(Menu, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
+        btnstep10 = tk.Button(Menu, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
+        btnstep25 = tk.Button(Menu, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
+        # btnstep50 = tk.Button(Imageviewer, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
 
         #zoom buttons
-        btnzoomin = tk.Button(frame, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, frame))
-        btnzoomout = tk.Button(frame, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, frame))
-        btnresetzoom = tk.Button(frame, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, frame))
+        btnzoomin = tk.Button(Menu, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, Imageviewer))
+        btnzoomout = tk.Button(Menu, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, Imageviewer))
+        btnresetzoom = tk.Button(Menu, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, Imageviewer))
 
         #match button + slider + text
-        btnmatch = tk.Button(frame, text='Automatic Matching', command=lambda *args: App.match(self, img1orig, img2orig, frame))
-        matchthresholdslider = tk.Scale(frame, from_=0, to=100, orient=tk.HORIZONTAL)
-        thresh_label = tk.Label(frame, text="Similarity:")
+        btnmatch = tk.Button(Menu, text='Automatic Matching', command=lambda *args: App.match(self, img1orig, img2orig, Imageviewer))
+        matchthresholdslider = tk.Scale(Menu, from_=0, to=100, orient=tk.HORIZONTAL)
+        thresh_label = tk.Label(Menu, text="Similarity:")
         matchthresholdslider.set(80)
         matchthreshold = matchthresholdslider.get()/100
-        matchstatus = tk.Text(frame, height=1, width=20)
-        btnbigger = tk.Button(frame, text='Bigger', command=lambda *args: App.increase_imagesize(self,img1orig, img2orig, frame))
-        btnsmaller = tk.Button(frame, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, frame))
-        btnresetsize = tk.Button(frame, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, frame))
+        matchstatus = tk.Text(Menu, height=1, width=20)
+        btnbigger = tk.Button(Menu, text='Bigger', command=lambda *args: App.increase_imagesize(self, img1orig, img2orig, Imageviewer))
+        btnsmaller = tk.Button(Menu, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, Imageviewer))
+        btnresetsize = tk.Button(Menu, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, Imageviewer))
 
         #button settings
         btn1.config(width=20, height=2)
@@ -229,6 +234,12 @@ class App(tk.Tk):
         btnresetsize.grid(row=13, column=1)
         keyboarduse.grid(row=14, column=0, columnspan=3)
         binarisation.grid(row=15, column=0, columnspan=3)
+
+
+        #scrollbars for images
+
+
+
 
     def activate_keys(self, img1, img2, frame):
         #keyboard hotkeys assign
@@ -554,12 +565,16 @@ class App(tk.Tk):
         App.set_matchtext(self, matchtext)
         img1, img2, combined = App.resize_and_combine_images(self,img1,img2, frame)
 
+        width = img1.shape[0]
+        height = img1.shape[1]
+
+
         #destroy old image_windows if needed
         if imagewindows_active:
             image1_window.destroy()
-            image2_window.destroy()
-            image3_window.destroy()
-            image4_window.destroy()
+            # image2_window.destroy()
+            # image3_window.destroy()
+            # image4_window.destroy()
 
         #change dimension by zoom setting
         dimx = img1.shape[1]
@@ -587,29 +602,79 @@ class App(tk.Tk):
 
         #create scrollable images
 
-        # def multiple_yview(*args):
-        #     image1_window.cnvs.yview(*args)
-        #     image2_window.cnvs.yview(*args)
-        #     image3_window.cnvs.yview(*args)
-        #     image4_window.cnvs.yview(*args)
+        def multiple_yview(*args):
+            image1_window.yview(*args)
+            image2_window.yview(*args)
+            image3_window.yview(*args)
+            image4_window.yview(*args)
+
+        def multiple_xview(*args):
+            image1_window.xview(*args)
+            image2_window.xview(*args)
+            image3_window.xview(*args)
+            image4_window.xview(*args)
+
+        # image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined Image")
+
+
+        v_scroll = tk.Scrollbar(frame, orient='vertical', width=10)
+        h_scroll = tk.Scrollbar(frame, orient='horizontal', width=10)
+
+        h_scroll.grid(row=2, column=0, columnspan=2, sticky='we')
+        v_scroll.grid(row=0, column=2, rowspan=2, sticky='ns')
+
+        v_scroll.config(command=multiple_yview)
+        h_scroll.config(command=multiple_xview)
+
+        image1_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        image1_window.grid(row=0, column=0, rowspan=1, columnspan=1)
+        image1_window.config(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+        image1_window.config(scrollregion=(0, 0, width, height))
+        image1_window.create_image(0, 0, anchor='nw', image=photo1)
+
+        image2_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        image2_window.grid(row=0, column=1, rowspan=1, columnspan=1)
+        image2_window.config(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+        image2_window.config(scrollregion=(0, 0, width, height))
+        image2_window.create_image(0, 0, anchor='nw', image=photo2)
+
+        image3_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        image3_window.grid(row=1, column=0, rowspan=1, columnspan=1)
+        image3_window.config(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+        image3_window.config(scrollregion=(0, 0, width, height))
+        image3_window.create_image(0, 0, anchor='nw', image=photo3)
+
+        image4_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        image4_window.grid(row=1, column=1, rowspan=1, columnspan=1)
+        image4_window.config(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+        image4_window.config(scrollregion=(0, 0, width, height))
+        image4_window.create_image(0, 0, anchor='nw', image=photo4)
+
+
+
+
+
+
+        # image2_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        # image2_window.create_image(0, 0, anchor='nw', image=photo2)
+        # image2_window.grid(row=0, column=1, rowspan=1, columnspan=1)
         #
-        # def multiple_xview(*args):
-        #     image1_window.cnvs.xview(*args)
-        #     image2_window.cnvs.xview(*args)
-        #     image3_window.cnvs.xview(*args)
-        #     image4_window.cnvs.xview(*args)
+        # image3_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        # image3_window.create_image(0, 0, anchor='nw', image=photo3)
+        # image3_window.grid(row=1, column=0, rowspan=1, columnspan=1)
+        #
+        # image4_window = tk.Canvas(frame, width=400*imagefactor, height=300*imagefactor)
+        # image4_window.create_image(0, 0, anchor='nw', image=photo4)
+        # image4_window.grid(row=1, column=1, rowspan=1, columnspan=1)
 
-        image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined Image")
-        image1_window.grid(row=0, column=4, rowspan=6, columnspan=8)
-
-        image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Difference Image")
-        image2_window.grid(row=0, column=12, rowspan=6, columnspan=8)
-
-        image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 1")
-        image3_window.grid(row=6, column=4, rowspan=6, columnspan=8)
-
-        image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 2")
-        image4_window.grid(row=6, column=12, rowspan=6, columnspan=8)
+        # image2_window = App.ScrollableImage(frame, image=photo2, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Difference Image")
+        # image2_window.grid(row=0, column=2, rowspan=1, columnspan=1)
+        #
+        # image3_window = App.ScrollableImage(frame, image=photo3, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 1")
+        # image3_window.grid(row=2, column=0, rowspan=1, columnspan=1)
+        #
+        # image4_window = App.ScrollableImage(frame, image=photo4, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Diff in Image 2")
+        # image4_window.grid(row=2, column=2, rowspan=1, columnspan=1)
 
         imagewindows_active = True
 
