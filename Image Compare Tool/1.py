@@ -52,7 +52,7 @@ class ScrollbarFrame(tk.Frame):
         hsb.pack(side="bottom", fill="x")
 
         # Canvas for scrollbar
-        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff", width=1000, height=600)
         self.canvas.pack(side="left", fill="both", expand=True)
 
         # Bind Scrollbar canvas
@@ -79,7 +79,7 @@ class App(tk.Tk):
     class ScrollableImage(tk.Frame):
         def __init__(self, master=None, **kw):
             self.image = kw.pop('image', None)
-            sw = kw.pop('scrollbarwidth', 10)
+            sw = kw.pop('scrollbarwidth', 20)
             label = kw.pop('Label', "Label")
             super(App.ScrollableImage, self).__init__(master=master, **kw)
             self.cnvs = tk.Canvas(self, highlightthickness=0, **kw)
@@ -131,54 +131,72 @@ class App(tk.Tk):
         binarise_active = tk.BooleanVar(frame)
 
         Menu = tk.Frame(frame)
-        Imageviewer = tk.Frame(frame)
         Menu.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        Loading = tk.Frame(Menu)
+        Filters = tk.Frame(Menu)
+        Movement = tk.Frame(Menu)
+        Stepping = tk.Frame(Menu)
+        Zoom = tk.Frame(Menu)
+        Matching = tk.Frame(Menu)
+        Sizing = tk.Frame(Menu)
+        Loading.pack(fill=tk.X)
+        Filters.pack(fill=tk.X)
+        Movement.pack(fill=tk.X)
+        Stepping.pack(fill=tk.X)
+        Zoom.pack(fill=tk.X)
+        Matching.pack(fill=tk.X)
+        Sizing.pack(fill=tk.X)
+
+
+
+
+        Imageviewer = tk.Frame(frame)
         Imageviewer.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.BOTH)
         #create Buttons, etc ..
 
-        #loading Images
-        btn1 = tk.Button(Menu, text='Load first Image', command=create_img1)
-        btn2 = tk.Button(Menu, text='Load second Image', command=create_img2)
+        #Loading Images
+        btn1 = tk.Button(Loading, text='Load first Image', command=create_img1)
+        btn2 = tk.Button(Loading, text='Load second Image', command=create_img2)
+        btn3 = tk.Button(Loading, text="Show Images", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,Imageviewer))
 
-        #combine button and transparency/binarization slider
-        btn3 = tk.Button(Menu, text="Show combined", command=lambda *args: App.show_combined_unmatch(self,img1orig, img2orig,Imageviewer))
-        transparency = tk.Scale(Menu, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,Imageviewer, transparency))
-        trans_label = tk.Label(Menu, text="Transparency:")
+        #Filters
+        transparency = tk.Scale(Filters, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda *args: App.update_transparency(self,img1orig, img2orig,Imageviewer, transparency))
+        trans_label = tk.Label(Filters, text="Transparency:")
         transparency.set(70)
-        binarisationthresh = tk.Scale(Menu, from_=0, to=255, orient=tk.HORIZONTAL, command=lambda *args: App.update_binarisation_thresh(self,img1orig, img2orig,Imageviewer, binarisationthresh))
-        binarise_label = tk.Label(Menu, text="Diff Thresh:")
+        binarisationthresh = tk.Scale(Filters, from_=0, to=255, orient=tk.HORIZONTAL, command=lambda *args: App.update_binarisation_thresh(self,img1orig, img2orig,Imageviewer, binarisationthresh))
+        binarise_label = tk.Label(Filters, text="Binarise Thresh:")
+        binarisation = tk.Checkbutton(Filters, text="activate Binarisation", variable=binarise_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_binarisation(self,img1orig, img2orig, Imageviewer))
         binarisationthresh.set(1)
 
         #movement
-        btnup = tk.Button(Menu, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, Imageviewer))
-        btndown = tk.Button(Menu, text='Down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, Imageviewer))
-        btnright = tk.Button(Menu, text='Right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, Imageviewer))
-        btnleft = tk.Button(Menu, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, Imageviewer))
-        btnreset = tk.Button(Menu, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, Imageviewer))
-        keyboarduse = tk.Checkbutton(Menu, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, Imageviewer))
-        binarisation = tk.Checkbutton(Menu, text="activate Binarisation", variable=binarise_active, onvalue=True, offvalue=False, command=lambda *args: App.show_combined(self,img1orig, img2orig, Imageviewer))
+        btnup = tk.Button(Movement, text='Up', command=lambda *args: App.increase_offset_y(self,img1orig, img2orig, Imageviewer))
+        btndown = tk.Button(Movement, text='Down', command=lambda *args: App.decrease_offset_y(self,img1orig, img2orig, Imageviewer))
+        btnright = tk.Button(Movement, text='Right', command=lambda *args: App.increase_offset_x(self,img1orig, img2orig, Imageviewer))
+        btnleft = tk.Button(Movement, text='Left', command=lambda *args: App.decrease_offset_x(self,img1orig, img2orig, Imageviewer))
+        btnreset = tk.Button(Movement, text='Reset', command=lambda *args: App.reset_offsets(self,img1orig, img2orig, Imageviewer))
+        keyboarduse = tk.Checkbutton(Movement, text="activate Keys", variable=keyboard_active, onvalue=True, offvalue=False, command=lambda *args: App.activate_keys(self,img1orig, img2orig, Imageviewer))
 
         #stepsize buttons
-        btnstep1 = tk.Button(Menu, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
-        btnstep10 = tk.Button(Menu, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
-        btnstep25 = tk.Button(Menu, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
+        btnstep1 = tk.Button(Stepping, text='Stepsize 1', command=lambda *args: App.change_stepsize(self,1))
+        btnstep10 = tk.Button(Stepping, text='Stepsize 10', command=lambda *args: App.change_stepsize(self,10))
+        btnstep25 = tk.Button(Stepping, text='Stepsize 25', command=lambda *args: App.change_stepsize(self,25))
         # btnstep50 = tk.Button(Imageviewer, text='Stepsize 50', command=lambda *args: App.change_stepsize(self, 50))
 
         #zoom buttons
-        btnzoomin = tk.Button(Menu, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, Imageviewer))
-        btnzoomout = tk.Button(Menu, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, Imageviewer))
-        btnresetzoom = tk.Button(Menu, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, Imageviewer))
+        btnzoomin = tk.Button(Zoom, text='Zoom in', command=lambda *args: App.zoom_in(self,img1orig, img2orig, Imageviewer))
+        btnzoomout = tk.Button(Zoom, text='Zoom out', command=lambda *args: App.zoom_out(self,img1orig, img2orig, Imageviewer))
+        btnresetzoom = tk.Button(Zoom, text='Reset', command=lambda *args: App.zoom_reset(self, img1orig, img2orig, Imageviewer))
 
         #match button + slider + text
-        btnmatch = tk.Button(Menu, text='Automatic Matching', command=lambda *args: App.match(self, img1orig, img2orig, Imageviewer))
-        matchthresholdslider = tk.Scale(Menu, from_=0, to=100, orient=tk.HORIZONTAL)
-        thresh_label = tk.Label(Menu, text="Similarity:")
+        btnmatch = tk.Button(Matching, text='Automatic Matching', command=lambda *args: App.match(self, img1orig, img2orig, Imageviewer))
+        matchthresholdslider = tk.Scale(Matching, from_=0, to=100, orient=tk.HORIZONTAL)
+        thresh_label = tk.Label(Matching, text="Similarity:")
         matchthresholdslider.set(80)
         matchthreshold = matchthresholdslider.get()/100
-        matchstatus = tk.Text(Menu, height=1, width=20)
-        btnbigger = tk.Button(Menu, text='Bigger', command=lambda *args: App.increase_imagesize(self, img1orig, img2orig, Imageviewer))
-        btnsmaller = tk.Button(Menu, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, Imageviewer))
-        btnresetsize = tk.Button(Menu, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, Imageviewer))
+        matchstatus = tk.Text(Matching, height=1, width=20)
+        btnbigger = tk.Button(Matching, text='Bigger', command=lambda *args: App.increase_imagesize(self, img1orig, img2orig, Imageviewer))
+        btnsmaller = tk.Button(Matching, text='Smaller', command=lambda *args: App.decrease_imagesize(self,img1orig, img2orig, Imageviewer))
+        btnresetsize = tk.Button(Matching, text='Reset', command=lambda *args: App.reset_imagesize(self, img1orig, img2orig, Imageviewer))
 
         #button settings
         btn1.config(width=20, height=2)
@@ -196,44 +214,59 @@ class App(tk.Tk):
         btnzoomout.config(width=8, height=2)
         btnresetzoom.config(width=8, height=2)
         btnmatch.config(width=20, height=2)
-        matchthresholdslider.config(width=10)
+        matchthresholdslider.config(width=8)
         matchstatus.insert(tk.END, matchtext)
         btnbigger.config(width=8, height=2)
         btnsmaller.config(width=8, height=2)
         btnresetsize.config(width=8, height=2)
-        transparency.config(width=10)
-        binarisationthresh.config(width=10)
+        transparency.config(width=8)
+        binarisationthresh.config(width=8)
 
-        #button, etc... locations
-        btn1.grid(row=0, column=0, columnspan=3)
-        btn2.grid(row=1, column=0, columnspan=3)
-        btn3.grid(row=2, column=0, columnspan=3)
-        trans_label.grid(row=3, column=0)
-        transparency.grid(row=3, column=1, columnspan=2)
-        binarise_label.grid(row=4, column=0)
-        binarisationthresh.grid(row=4, column=1, columnspan=2)
+    #Locating
 
-        btnstep1.grid(row=8, column=0)
-        btnstep10.grid(row=8, column=1)
-        btnstep25.grid(row=8, column=2)
- #       btnstep50.grid(row=6, column=3)
-        btnup.grid(row=5, column=1)
-        btndown.grid(row=7, column=1)
-        btnleft.grid(row=6, column=0)
-        btnright.grid(row=6, column=2)
-        btnreset.grid(row=6, column=1)
-        btnzoomin.grid(row=9, column=0)
-        btnzoomout.grid(row=9, column=2)
-        btnresetzoom.grid(row=9, column=1)
-        thresh_label.grid(row=10, column=0)
-        matchthresholdslider.grid(row=10, column=1,columnspan=2)
-        btnmatch.grid(row=11, column=0, columnspan=3)
-        matchstatus.grid(row=12, column=0, columnspan=3)
-        btnbigger.grid(row=13, column=0)
-        btnsmaller.grid(row=13, column=2)
-        btnresetsize.grid(row=13, column=1)
-        keyboarduse.grid(row=14, column=0, columnspan=3)
-        binarisation.grid(row=15, column=0, columnspan=3)
+        #Loading
+        btn1.pack(expand=tk.YES, fill=tk.BOTH)
+        btn2.pack(expand=tk.YES, fill=tk.BOTH)
+        btn3.pack(expand=tk.YES, fill=tk.BOTH)
+
+        #Filters
+        trans_label.pack(expand=tk.YES, fill=tk.BOTH)
+        transparency.pack(expand=tk.YES, fill=tk.BOTH)
+        binarise_label.pack(expand=tk.YES, fill=tk.BOTH)
+        thresh_label.pack(expand=tk.YES, fill=tk.BOTH)
+        binarisationthresh.pack(expand=tk.YES, fill=tk.BOTH)
+        binarisation.pack(expand=tk.YES, fill=tk.BOTH)
+
+        #Stepping
+        btnstep1.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnstep10.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnstep25.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+
+        #Movement
+        btnup.grid(row=0, column=1)
+        btndown.grid(row=2, column=1)
+        btnleft.grid(row=1, column=0)
+        btnright.grid(row=1, column=2)
+        btnreset.grid(row=1, column=1)
+        keyboarduse.grid(row=3, column=1)
+
+        #Zoom
+        btnzoomin.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnresetzoom.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnzoomout.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+
+        #Matching
+        matchthresholdslider.pack(expand=tk.YES, fill=tk.BOTH)
+        btnmatch.pack(expand=tk.YES, fill=tk.BOTH)
+        matchstatus.pack(expand=tk.YES, fill=tk.BOTH)
+
+        #Sizing
+        btnbigger.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnresetsize.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+        btnsmaller.pack(side=tk.LEFT, expand=tk.YES, fill=tk.BOTH)
+
+
+
 
 
         #scrollbars for images
@@ -259,6 +292,15 @@ class App(tk.Tk):
         global transparency
 
         transparency=transparencynew
+
+        img1 = img1.copy()
+        img2 = img2.copy()
+        if matched:
+            App.show_combined(self, img1matched, img2matched, frame)
+        else:
+            App.show_combined(self, img1, img2, frame)
+
+    def activate_binarisation(self, img1, img2, frame):
 
         img1 = img1.copy()
         img2 = img2.copy()
@@ -572,9 +614,9 @@ class App(tk.Tk):
         #destroy old image_windows if needed
         if imagewindows_active:
             image1_window.destroy()
-            # image2_window.destroy()
-            # image3_window.destroy()
-            # image4_window.destroy()
+            image2_window.destroy()
+            image3_window.destroy()
+            image4_window.destroy()
 
         #change dimension by zoom setting
         dimx = img1.shape[1]
@@ -592,6 +634,9 @@ class App(tk.Tk):
         thresh = cv2.resize(thresh, newdim)
         result1 = cv2.resize(result1, newdim)
         result2 = cv2.resize(result2, newdim)
+
+        width = combined.shape[1]
+        height = combined.shape[0]
 
         #convert cv2image to photoimage for gui display
 
@@ -617,11 +662,11 @@ class App(tk.Tk):
         # image1_window = App.ScrollableImage(frame, image=photo1, scrollbarwidth=6, width=400*imagefactor, height=300*imagefactor, Label="Combined Image")
 
 
-        v_scroll = tk.Scrollbar(frame, orient='vertical', width=10)
-        h_scroll = tk.Scrollbar(frame, orient='horizontal', width=10)
+        v_scroll = tk.Scrollbar(frame, orient='vertical', width=30)
+        h_scroll = tk.Scrollbar(frame, orient='horizontal', width=30)
 
-        h_scroll.grid(row=2, column=0, columnspan=2, sticky='we')
-        v_scroll.grid(row=0, column=2, rowspan=2, sticky='ns')
+        h_scroll.grid(row=3, column=0, columnspan=2, sticky='we')
+        v_scroll.grid(row=0, column=3, rowspan=2, sticky='ns')
 
         v_scroll.config(command=multiple_yview)
         h_scroll.config(command=multiple_xview)
